@@ -46,9 +46,9 @@ window.dispatchEvent(new Event('firebaseReady'));
   --blue: #5c9ee0;
   --purple: #9b7fd4;
   --r: 8px;
-  --header-h: 60px;
-  --vbar-h: 45px;
-  --tabs-h: 46px;
+  --hh: 60px;
+  --vh: 45px;
+  --th: 46px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; min-height: 100vh; }
@@ -57,25 +57,84 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 .header {
   background: var(--surface); border-bottom: 1px solid var(--border);
   padding: 0 32px; display: flex; align-items: center; justify-content: space-between;
-  height: var(--header-h); position: sticky; top: 0; z-index: 300;
+  height: var(--hh); position: sticky; top: 0; z-index: 300;
 }
 .logo { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; color: var(--accent); }
 .logo span { color: var(--text2); font-weight: 300; font-style: italic; }
-.hdr-right { display: flex; align-items: center; gap: 10px; }
+.hdr-right { display: flex; align-items: center; gap: 10px; position: relative; }
+
+/* ── ADMIN DROPDOWN MENU ── */
+.admin-menu-wrap { position: relative; }
+.admin-menu-btn {
+  background: #2a2010; border: 1px solid var(--accent); color: var(--accent);
+  padding: 6px 14px; border-radius: var(--r); font-family: 'DM Sans', sans-serif;
+  font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 7px;
+  transition: background .2s;
+}
+.admin-menu-btn:hover { background: #3a300a; }
+.admin-menu-btn .arrow { font-size: 10px; transition: transform .2s; }
+.admin-menu-btn.open .arrow { transform: rotate(180deg); }
+
+.admin-dropdown {
+  display: none;
+  position: absolute; top: calc(100% + 8px); right: 0;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: var(--r); min-width: 240px; z-index: 400;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5); overflow: hidden;
+}
+.admin-dropdown.open { display: block; }
+
+.adm-section { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.adm-section:last-child { border-bottom: none; }
+.adm-section-title { padding: 6px 16px 4px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); }
+
+.adm-file-info { padding: 8px 16px; }
+.adm-file-info .fi-name { font-size: 12px; color: var(--text); font-weight: 500; word-break: break-all; }
+.adm-file-info .fi-date { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.adm-file-info .fi-none { font-size: 12px; color: var(--text3); }
+
+.adm-btn {
+  width: 100%; padding: 9px 16px; background: none; border: none;
+  color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px;
+  cursor: pointer; text-align: left; display: flex; align-items: center; gap: 9px;
+  transition: background .15s;
+}
+.adm-btn:hover { background: var(--surface2); }
+.adm-btn.danger { color: var(--red); }
+.adm-btn.primary { color: var(--accent); font-weight: 500; }
+
+/* ── CONTROLS ── */
+.btn {
+  background: var(--surface2); border: 1px solid var(--border2); color: var(--text);
+  padding: 5px 12px; border-radius: var(--r); font-family: 'DM Sans', sans-serif;
+  font-size: 13px; cursor: pointer; outline: none; transition: border-color .2s;
+}
+.btn:hover { border-color: var(--accent); }
+.badge {
+  background: var(--surface3); border: 1px solid var(--border2); color: var(--text2);
+  padding: 3px 9px; border-radius: 20px; font-size: 11px; font-family: 'DM Mono', monospace;
+}
+.badge.live { border-color: var(--green); color: var(--green); }
 
 /* ── VERSION BAR ── */
 .vbar {
   background: var(--surface); border-bottom: 1px solid var(--border);
   padding: 0 32px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-  height: var(--vbar-h); position: sticky; top: var(--header-h); z-index: 290;
+  min-height: var(--vh); position: sticky; top: var(--hh); z-index: 290;
 }
 .vbar label { color: var(--text2); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+select {
+  background: var(--surface2); border: 1px solid var(--border2); color: var(--text);
+  padding: 5px 11px; border-radius: var(--r); font-family: 'DM Sans', sans-serif;
+  font-size: 13px; cursor: pointer; outline: none; transition: border-color .2s;
+}
+select:hover { border-color: var(--accent); }
 
 /* ── TABS ── */
 .tabs-wrap {
   background: var(--surface); border-bottom: 1px solid var(--border);
   padding: 0 32px; overflow-x: auto; white-space: nowrap;
-  position: sticky; top: calc(var(--header-h) + var(--vbar-h)); z-index: 280;
+  position: sticky; top: calc(var(--hh) + var(--vh)); z-index: 280;
 }
 .tabs { display: inline-flex; }
 .tab {
@@ -84,26 +143,6 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 }
 .tab:hover { color: var(--text); }
 .tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
-
-/* ── CONTROLS ── */
-select, .btn {
-  background: var(--surface2); border: 1px solid var(--border2); color: var(--text);
-  padding: 5px 11px; border-radius: var(--r); font-family: 'DM Sans', sans-serif;
-  font-size: 13px; cursor: pointer; outline: none; transition: border-color .2s;
-}
-select:hover, .btn:hover { border-color: var(--accent); }
-.btn-primary {
-  background: var(--accent); color: #0f0f0f; border: none;
-  padding: 9px 20px; border-radius: var(--r); font-family: 'DM Sans', sans-serif;
-  font-weight: 500; font-size: 13px; cursor: pointer; transition: background .2s, transform .1s;
-}
-.btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
-.badge {
-  background: var(--surface3); border: 1px solid var(--border2); color: var(--text2);
-  padding: 3px 9px; border-radius: 20px; font-size: 11px; font-family: 'DM Mono', monospace;
-}
-.badge.live { border-color: var(--green); color: var(--green); }
-.badge.warn { border-color: var(--accent); color: var(--accent); }
 
 /* ── MONTH CHIPS ── */
 .chips { display: flex; gap: 5px; flex-wrap: wrap; }
@@ -131,19 +170,16 @@ select:hover, .btn:hover { border-color: var(--accent); }
 }
 .stitle::after { content:''; flex:1; height:1px; background: var(--border); }
 
-/* ── TABLE WRAP — scroll container for sticky headers ── */
+/* ── TABLE — sticky header within scroll container ── */
 .tw {
   border: 1px solid var(--border); border-radius: var(--r);
-  overflow-x: auto; overflow-y: auto; max-height: 500px;
-  margin-bottom: 20px;
+  overflow-x: auto; overflow-y: auto; max-height: 500px; margin-bottom: 20px;
 }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
 thead th {
   padding: 9px 13px; text-align: left; color: var(--text2); font-weight: 500;
   font-size: 11px; text-transform: uppercase; letter-spacing: .7px; white-space: nowrap;
-  background: var(--surface2);
-  /* sticky within .tw scroll container, NOT the page */
-  position: sticky; top: 0; z-index: 5;
+  background: var(--surface2); position: sticky; top: 0; z-index: 5;
   box-shadow: 0 1px 0 var(--border2);
 }
 tbody tr { border-bottom: 1px solid var(--border); transition: background .15s; }
@@ -160,7 +196,6 @@ tbody td { padding: 9px 13px; vertical-align: middle; }
 .p-purple { background:#22183a; color:var(--purple); }
 .p-green  { background:#0d2a1a; color:var(--green); }
 .p-gold   { background:#2a2010; color:var(--accent); }
-.p-red    { background:#2a0f0f; color:var(--red); }
 
 /* ── COMMENTS ── */
 .cc { min-width: 170px; }
@@ -174,11 +209,7 @@ tbody td { padding: 9px 13px; vertical-align: middle; }
 .ci.pp:focus { border-color:var(--purple); }
 .si { font-size:10px; color:var(--green); opacity:0; transition:opacity .3s; display:block; }
 .si.on { opacity:1; }
-.ai-tag {
-  display:inline-flex; align-items:center; gap:3px;
-  background:#1a1a2e; border:1px solid #2a2a4a; border-radius:4px;
-  padding:2px 6px; font-size:10px; color:#7a7aff; margin-left:5px;
-}
+.ai-tag { display:inline-flex; align-items:center; background:#1a1a2e; border:1px solid #2a2a4a; border-radius:4px; padding:2px 6px; font-size:10px; color:#7a7aff; margin-left:5px; }
 
 /* ── COLLAPSIBLE ── */
 .ch {
@@ -193,24 +224,9 @@ tbody td { padding: 9px 13px; vertical-align: middle; }
 .cb { display:none; margin-bottom:14px; }
 .cb.open { display:block; }
 
-/* ── ADMIN PANEL ── */
-.admin-panel {
-  background:var(--surface); border:1px solid var(--border); border-radius:var(--r);
-  padding:16px 20px; margin-bottom:24px;
-  display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;
-}
-.admin-panel-info h4 { font-size:13px; color:var(--text); margin-bottom:3px; }
-.admin-panel-info p  { font-size:12px; color:var(--text2); }
-
 /* ── MODAL ── */
-.overlay {
-  position:fixed; inset:0; background:rgba(0,0,0,.82);
-  display:flex; align-items:center; justify-content:center; z-index:600;
-}
-.modal {
-  background:var(--surface); border:1px solid var(--border2); border-radius:12px;
-  padding:32px; width:340px; max-width:90vw;
-}
+.overlay { position:fixed; inset:0; background:rgba(0,0,0,.82); display:flex; align-items:center; justify-content:center; z-index:600; }
+.modal { background:var(--surface); border:1px solid var(--border2); border-radius:12px; padding:32px; width:340px; max-width:90vw; }
 .modal h3 { font-family:'Fraunces',serif; font-size:19px; color:var(--accent); margin-bottom:7px; }
 .modal p  { color:var(--text2); font-size:13px; margin-bottom:20px; line-height:1.5; }
 .modal input {
@@ -221,37 +237,27 @@ tbody td { padding: 9px 13px; vertical-align: middle; }
 .modal input:focus { border-color:var(--accent); }
 .modal-err { color:var(--red); font-size:12px; min-height:16px; margin-bottom:10px; }
 .modal-btns { display:flex; gap:8px; justify-content:flex-end; }
+.btn-primary { background:var(--accent); color:#0f0f0f; border:none; padding:9px 20px; border-radius:var(--r); font-family:'DM Sans',sans-serif; font-weight:500; font-size:13px; cursor:pointer; transition:background .2s; }
+.btn-primary:hover { background:var(--accent2); }
 
 /* ── LOADING ── */
-#ls {
-  position:fixed; inset:0; background:var(--bg);
-  display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:999;
-}
-.spin {
-  width:38px; height:38px; border:3px solid var(--border); border-top-color:var(--accent);
-  border-radius:50%; animation:sp .8s linear infinite; margin-bottom:14px;
-}
+#ls { position:fixed; inset:0; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:999; }
+.spin { width:38px; height:38px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:sp .8s linear infinite; margin-bottom:14px; }
 @keyframes sp { to { transform:rotate(360deg); } }
 #ls p { color:var(--text2); font-size:13px; }
 
-/* ── WAITING ── */
-#ws {
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  min-height:calc(100vh - var(--header-h)); padding:40px; text-align:center;
-}
-#ws .wi { font-size:50px; margin-bottom:18px; }
-#ws h2  { font-family:'Fraunces',serif; font-size:24px; color:var(--accent); margin-bottom:8px; }
-#ws p   { color:var(--text2); max-width:380px; line-height:1.6; }
+/* ── WAITING SCREEN ── */
+#ws { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:calc(100vh - var(--hh)); padding:40px; text-align:center; }
+.wi { font-size:52px; margin-bottom:20px; }
+#ws h2 { font-family:'Fraunces',serif; font-size:24px; color:var(--accent); margin-bottom:10px; }
+#ws p  { color:var(--text2); max-width:400px; line-height:1.6; margin-bottom:6px; }
+#ws .ws-admin-hint { font-size:12px; color:var(--text3); margin-top:12px; }
 
 .empty { text-align:center; padding:48px 20px; color:var(--text3); font-size:13px; }
 .hidden { display:none !important; }
 #fi { display:none; }
 
-@media(max-width:768px){
-  .main{padding:16px;}
-  .header,.vbar{padding:0 16px;}
-  .tabs-wrap{padding:0 16px;}
-}
+@media(max-width:768px){ .main{padding:16px;} .header,.vbar{padding:0 16px;} .tabs-wrap{padding:0 16px;} }
 </style>
 </head>
 <body>
@@ -262,16 +268,16 @@ tbody td { padding: 9px 13px; vertical-align: middle; }
   <p id="lm">Connecting to Firebase…</p>
 </div>
 
-<!-- ADMIN MODAL -->
+<!-- LOGIN MODAL -->
 <div class="overlay hidden" id="am">
   <div class="modal">
-    <h3>Admin Access</h3>
-    <p>Enter the admin password to upload and manage the data file.</p>
+    <h3>Admin Login</h3>
+    <p>Enter the admin password to manage data and upload files.</p>
     <input type="password" id="apw" placeholder="Password" onkeydown="if(event.key==='Enter')submitPw()"/>
     <div class="modal-err" id="aperr"></div>
     <div class="modal-btns">
       <button class="btn" onclick="closeModal()">Cancel</button>
-      <button class="btn-primary" onclick="submitPw()">Enter</button>
+      <button class="btn-primary" onclick="submitPw()">Login</button>
     </div>
   </div>
 </div>
@@ -282,18 +288,43 @@ tbody td { padding: 9px 13px; vertical-align: middle; }
   <div class="hdr-right">
     <span id="fbs" class="badge">⬤ Connecting…</span>
     <span id="fib" class="badge hidden"></span>
-    <span id="admbadge" class="badge warn hidden">🔑 Admin</span>
-    <button class="btn" id="admbtn" onclick="promptAdmin()">Admin Login</button>
-    <button class="btn hidden" id="admout" onclick="logoutAdmin()">Logout</button>
+
+    <!-- Viewer: just a login button -->
+    <button class="btn hidden" id="admbtn" onclick="promptAdmin()">🔑 Admin Login</button>
+
+    <!-- Admin: dropdown menu -->
+    <div class="admin-menu-wrap hidden" id="admmenu">
+      <button class="admin-menu-btn" id="admmenubtn" onclick="toggleAdminMenu()">
+        🔑 Admin <span class="arrow">▼</span>
+      </button>
+      <div class="admin-dropdown" id="admdd">
+
+        <div class="adm-section">
+          <div class="adm-section-title">Current File</div>
+          <div class="adm-file-info" id="adm-file-info">
+            <div class="fi-none">No file loaded yet</div>
+          </div>
+        </div>
+
+        <div class="adm-section">
+          <div class="adm-section-title">Actions</div>
+          <button class="adm-btn primary" onclick="triggerUpload()">⬆ Upload New File</button>
+        </div>
+
+        <div class="adm-section">
+          <button class="adm-btn danger" onclick="logoutAdmin()">↩ Logout</button>
+        </div>
+
+      </div>
+    </div>
+
   </div>
 </header>
 
 <!-- VERSION BAR -->
 <div class="vbar hidden" id="vbar">
-  <label>Budget</label>
-  <select id="bvs"></select>
-  <label>vs</label>
-  <select id="avs"></select>
+  <label>Budget</label><select id="bvs"></select>
+  <label>vs</label><select id="avs"></select>
   <label>Months</label>
   <div class="chips" id="mchips"></div>
 </div>
@@ -302,21 +333,23 @@ tbody td { padding: 9px 13px; vertical-align: middle; }
 <div class="tabs-wrap hidden" id="tw">
   <div class="tabs">
     <div class="tab active" data-id="summary" onclick="switchTab('summary')">📊 Overall — Full Fashion</div>
-    <div class="tab" data-id="ksa"     onclick="switchTab('ksa')">🇸🇦 KSA — All Boats</div>
-    <div class="tab" data-id="asp"     onclick="switchTab('asp')">✦ Aspirational Luxury</div>
-    <div class="tab" data-id="hiend"   onclick="switchTab('hiend')">◈ High-End Luxury</div>
-    <div class="tab" data-id="prem"    onclick="switchTab('prem')">◇ Premium & Delegation</div>
+    <div class="tab" data-id="ksa"   onclick="switchTab('ksa')">🇸🇦 KSA — All Boats</div>
+    <div class="tab" data-id="asp"   onclick="switchTab('asp')">✦ Aspirational Luxury</div>
+    <div class="tab" data-id="hiend" onclick="switchTab('hiend')">◈ High-End Luxury</div>
+    <div class="tab" data-id="prem"  onclick="switchTab('prem')">◇ Premium & Delegation</div>
   </div>
 </div>
 
-<!-- WAITING -->
+<!-- WAITING (no data yet) -->
 <div id="ws" class="hidden">
   <div class="wi">📊</div>
   <h2>No data loaded yet</h2>
-  <p>The admin hasn't uploaded a data file yet. Check back soon or contact your admin.</p>
+  <p>The admin hasn't uploaded a data file yet.</p>
+  <p>Check back soon, or contact your admin.</p>
+  <p class="ws-admin-hint" id="ws-hint"></p>
 </div>
 
-<!-- APP -->
+<!-- APP CONTENT -->
 <div id="ac" class="hidden">
   <div class="main" id="tc"></div>
 </div>
@@ -324,10 +357,10 @@ tbody td { padding: 9px 13px; vertical-align: middle; }
 <input type="file" id="fi" accept=".xlsx,.xls" onchange="handleFile(event)"/>
 
 <script>
-// ════════════════════════════════════════════
-// CONFIG — change admin password here
-// ════════════════════════════════════════════
-const ADMIN_PW = 'FashionAudit2026';
+// ══════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════
+const ADMIN_PW = 'Fashionaudit';
 
 const BOAT_META = {
   'ASPIRATIONAL LUXURY':  { short:'ASP LUX', cls:'p-purple' },
@@ -341,17 +374,17 @@ const BOAT_TABS = {
   prem:  'PREMIUM & DELEGATION',
 };
 
-// ════════════════════════════════════════════
+// ══════════════════════════════════════════
 // STATE
-// ════════════════════════════════════════════
+// ══════════════════════════════════════════
 let RAW=[], COMMENTS={}, VERSIONS=[], MONTHS=[];
 let BV='', AV='', ACTIVE_M=[];
 let ACTIVE_TAB='summary', IS_ADMIN=false, FILE_META=null;
 const C={};
 
-// ════════════════════════════════════════════
+// ══════════════════════════════════════════
 // FIREBASE READY
-// ════════════════════════════════════════════
+// ══════════════════════════════════════════
 window.addEventListener('firebaseReady', async ()=>{
   document.getElementById('fbs').textContent='⬤ Firebase';
   document.getElementById('fbs').classList.add('live');
@@ -359,149 +392,166 @@ window.addEventListener('firebaseReady', async ()=>{
   await tryLoadFile();
 });
 
-// ════════════════════════════════════════════
-// FILE — save to Firestore as base64 chunks
-// ════════════════════════════════════════════
-async function saveFile(buf, name){
-  showL('Saving to cloud…');
-  const { doc, setDoc } = window._firestoreOps;
-  const db = window._db;
-
-  const u8 = new Uint8Array(buf);
-  let bin = '';
-  for(let i=0;i<u8.length;i+=8192) bin += String.fromCharCode(...u8.subarray(i,i+8192));
-  const b64 = btoa(bin);
-
-  const CHUNK = 700000;
-  const chunks = [];
-  for(let i=0;i<b64.length;i+=CHUNK) chunks.push(b64.slice(i,i+CHUNK));
-
-  const meta = { name, uploadedAt: new Date().toISOString(), chunks: chunks.length };
-  await setDoc(doc(db,'filestore','meta'), meta);
-  for(let i=0;i<chunks.length;i++){
-    updateL(`Saving… (${i+1}/${chunks.length})`);
-    await setDoc(doc(db,'filestore',`c${i}`), { d: chunks[i] });
-  }
-  FILE_META = meta;
-  updateFileBadge();
+// ══════════════════════════════════════════
+// ADMIN MENU
+// ══════════════════════════════════════════
+function promptAdmin(){
+  document.getElementById('am').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('apw').focus(), 50);
 }
-
-async function tryLoadFile(){
-  const { doc, getDoc } = window._firestoreOps;
-  const db = window._db;
-  try {
-    updateL('Checking for stored data…');
-    const ms = await getDoc(doc(db,'filestore','meta'));
-    if(!ms.exists()){ hideL(); showWaiting(); return; }
-    FILE_META = ms.data();
-    const n = FILE_META.chunks || 1;
-    let b64='';
-    for(let i=0;i<n;i++){
-      updateL(`Loading data… (${i+1}/${n})`);
-      const cs = await getDoc(doc(db,'filestore',`c${i}`));
-      if(cs.exists()) b64 += cs.data().d;
-    }
-    updateL('Parsing…');
-    const bin = atob(b64);
-    const u8 = new Uint8Array(bin.length);
-    for(let i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i);
-    const wb = XLSX.read(u8.buffer,{type:'array',cellDates:true});
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    parseData(XLSX.utils.sheet_to_json(ws,{header:1,defval:''}));
-    updateFileBadge();
-    hideL();
-    showApp();
-  } catch(e){
-    console.warn(e); hideL(); showWaiting();
-  }
+function closeModal(){
+  document.getElementById('am').classList.add('hidden');
+  document.getElementById('aperr').textContent='';
+  document.getElementById('apw').value='';
 }
-
-function updateFileBadge(){
-  if(!FILE_META) return;
-  const d = new Date(FILE_META.uploadedAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'});
-  const b = document.getElementById('fib');
-  b.textContent = `📄 ${FILE_META.name} · ${d}`;
-  b.classList.remove('hidden');
-}
-
-// ════════════════════════════════════════════
-// ADMIN
-// ════════════════════════════════════════════
-function promptAdmin(){ document.getElementById('am').classList.remove('hidden'); document.getElementById('apw').focus(); }
-function closeModal(){ document.getElementById('am').classList.add('hidden'); document.getElementById('aperr').textContent=''; document.getElementById('apw').value=''; }
 function submitPw(){
   if(document.getElementById('apw').value === ADMIN_PW){
     IS_ADMIN=true; closeModal();
-    document.getElementById('admbadge').classList.remove('hidden');
     document.getElementById('admbtn').classList.add('hidden');
-    document.getElementById('admout').classList.remove('hidden');
-    renderTab(ACTIVE_TAB);
+    document.getElementById('admmenu').classList.remove('hidden');
+    // Show hint on waiting screen
+    document.getElementById('ws-hint').textContent='You are logged in as admin. Use the 🔑 Admin menu in the top right to upload a file.';
+    updateAdmFileInfo();
+    if(RAW.length) renderTab(ACTIVE_TAB);
   } else {
-    document.getElementById('aperr').textContent='Incorrect password.';
+    document.getElementById('aperr').textContent='Incorrect password. Try again.';
   }
 }
 function logoutAdmin(){
   IS_ADMIN=false;
-  document.getElementById('admbadge').classList.add('hidden');
+  closeAdminMenu();
+  document.getElementById('admmenu').classList.add('hidden');
   document.getElementById('admbtn').classList.remove('hidden');
-  document.getElementById('admout').classList.add('hidden');
-  renderTab(ACTIVE_TAB);
+  document.getElementById('ws-hint').textContent='';
+  if(RAW.length) renderTab(ACTIVE_TAB);
+}
+function toggleAdminMenu(){
+  const dd=document.getElementById('admdd');
+  const btn=document.getElementById('admmenubtn');
+  const open=dd.classList.toggle('open');
+  btn.classList.toggle('open', open);
+}
+function closeAdminMenu(){
+  document.getElementById('admdd').classList.remove('open');
+  document.getElementById('admmenubtn').classList.remove('open');
+}
+// Close admin menu on outside click
+document.addEventListener('click', e=>{
+  if(!document.getElementById('admmenu').contains(e.target)) closeAdminMenu();
+});
+function triggerUpload(){
+  closeAdminMenu();
+  document.getElementById('fi').click();
+}
+function updateAdmFileInfo(){
+  const el=document.getElementById('adm-file-info');
+  if(!FILE_META){ el.innerHTML='<div class="fi-none">No file loaded yet</div>'; return; }
+  const d=new Date(FILE_META.uploadedAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  el.innerHTML=`<div class="fi-name">📄 ${FILE_META.name}</div><div class="fi-date">Uploaded: ${d}</div>`;
 }
 
-// ════════════════════════════════════════════
-// FILE UPLOAD
-// ════════════════════════════════════════════
-function handleFile(e){ if(e.target.files[0]) processFile(e.target.files[0]); }
+// ══════════════════════════════════════════
+// FILE SAVE / LOAD
+// ══════════════════════════════════════════
+async function saveFile(buf, name){
+  showL('Saving to cloud…');
+  const {doc,setDoc}=window._firestoreOps, db=window._db;
+  const u8=new Uint8Array(buf);
+  let bin='';
+  for(let i=0;i<u8.length;i+=8192) bin+=String.fromCharCode(...u8.subarray(i,i+8192));
+  const b64=btoa(bin);
+  const CHUNK=700000;
+  const chunks=[];
+  for(let i=0;i<b64.length;i+=CHUNK) chunks.push(b64.slice(i,i+CHUNK));
+  const meta={name,uploadedAt:new Date().toISOString(),chunks:chunks.length};
+  await setDoc(doc(db,'filestore','meta'),meta);
+  for(let i=0;i<chunks.length;i++){
+    updateL(`Saving… (${i+1}/${chunks.length})`);
+    await setDoc(doc(db,'filestore',`c${i}`),{d:chunks[i]});
+  }
+  FILE_META=meta;
+  updateFileBadge();
+  updateAdmFileInfo();
+}
+
+async function tryLoadFile(){
+  const {doc,getDoc}=window._firestoreOps, db=window._db;
+  try{
+    updateL('Checking for stored data…');
+    const ms=await getDoc(doc(db,'filestore','meta'));
+    if(!ms.exists()){ hideL(); showWaiting(); return; }
+    FILE_META=ms.data();
+    const n=FILE_META.chunks||1;
+    let b64='';
+    for(let i=0;i<n;i++){
+      updateL(`Loading data… (${i+1}/${n})`);
+      const cs=await getDoc(doc(db,'filestore',`c${i}`));
+      if(cs.exists()) b64+=cs.data().d;
+    }
+    updateL('Parsing…');
+    const bin=atob(b64), u8=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i);
+    const wb=XLSX.read(u8.buffer,{type:'array',cellDates:true});
+    parseData(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''}));
+    updateFileBadge();
+    hideL(); showApp();
+  } catch(e){ console.warn(e); hideL(); showWaiting(); }
+}
+
+function updateFileBadge(){
+  if(!FILE_META) return;
+  const d=new Date(FILE_META.uploadedAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'});
+  const b=document.getElementById('fib');
+  b.textContent=`📄 ${FILE_META.name} · ${d}`;
+  b.classList.remove('hidden');
+}
+
+function handleFile(e){ if(e.target.files[0]) processFile(e.target.files[0]); e.target.value=''; }
 function processFile(file){
   showL('Reading file…');
-  const r = new FileReader();
-  r.onload = async e=>{
+  const r=new FileReader();
+  r.onload=async e=>{
     try{
       updateL('Parsing…');
-      const wb = XLSX.read(e.target.result,{type:'array',cellDates:true});
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      parseData(XLSX.utils.sheet_to_json(ws,{header:1,defval:''}));
-      await saveFile(e.target.result, file.name);
+      const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+      parseData(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''}));
+      await saveFile(e.target.result,file.name);
       hideL(); showApp();
     } catch(err){ hideL(); alert('Error: '+err.message); }
   };
   r.readAsArrayBuffer(file);
 }
 
-// ════════════════════════════════════════════
+// ══════════════════════════════════════════
 // DATA PARSING
-// ════════════════════════════════════════════
+// ══════════════════════════════════════════
 function mapCols(hdr){
-  const n = s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const n=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
   hdr.forEach((h,i)=>{
     const v=n(h);
-    if(v.includes('version'))                                             C.ver=i;
+    if(v.includes('version'))                                              C.ver=i;
     if(v.includes('calendarmonth')||(v.includes('calendar')&&v.includes('month'))) C.mon=i;
-    if(v==='employee'||v==='employeecode')                                C.emp=i;
-    if(v==='country')                                                     C.cty=i;
-    if(v==='hrbp')                                                        C.hrbp=i;
-    if(v==='boat')                                                        C.boat=i;
-    if(v.includes('employeecategory'))                                    C.cat=i;
-    if(v==='cc')                                                          C.cc=i;
-    if(v==='name'&&C.ccn===undefined)                                     C.ccn=i;
-    if(v==='empname'||v==='employeename'||v.includes('empname'))         C.enm=i;
-    if(v==='jobtitle'&&C.jt===undefined)                                  C.jt=i;
-    if(v==='headcount')                                                   C.hc=i;
-    if(v.includes('deltaaction'))                                         C.da=i;
-    if(v.includes('totalmanpowercost')||v.includes('totalmanpower'))      C.tmc=i;
-    if(v.includes('totalnonpayroll'))                                     C.npe=i;
+    if(v==='employee'||v==='employeecode')                                 C.emp=i;
+    if(v==='country')                                                      C.cty=i;
+    if(v==='hrbp')                                                         C.hrbp=i;
+    if(v==='boat')                                                         C.boat=i;
+    if(v.includes('employeecategory'))                                     C.cat=i;
+    if(v==='cc')                                                           C.cc=i;
+    if(v==='name'&&C.ccn===undefined)                                      C.ccn=i;
+    if((v==='empname'||v==='employeename'||v.includes('empname'))&&C.enm===undefined) C.enm=i;
+    if(v==='jobtitle'&&C.jt===undefined)                                   C.jt=i;
+    if(v==='headcount')                                                    C.hc=i;
+    if(v.includes('deltaaction'))                                          C.da=i;
+    if(v.includes('totalmanpowercost')||v.includes('totalmanpower'))       C.tmc=i;
+    if(v.includes('totalnonpayroll'))                                      C.npe=i;
   });
 }
-
 function parseData(rows){
   if(rows.length<2) return;
   mapCols(rows[0]);
-  RAW = rows.slice(1).filter(r=>r.some(c=>c!==''));
+  RAW=rows.slice(1).filter(r=>r.some(c=>c!==''));
   const vs=new Set(), ms=new Set();
-  RAW.forEach(r=>{
-    if(r[C.ver]) vs.add(String(r[C.ver]).trim());
-    const m=pmon(r[C.mon]); if(m) ms.add(m);
-  });
+  RAW.forEach(r=>{ if(r[C.ver]) vs.add(String(r[C.ver]).trim()); const m=pmon(r[C.mon]); if(m) ms.add(m); });
   VERSIONS=[...vs].sort();
   MONTHS=[...ms].sort((a,b)=>new Date('01 '+a)-new Date('01 '+b));
   ACTIVE_M=[];
@@ -509,32 +559,29 @@ function parseData(rows){
   const buds=VERSIONS.filter(v=>!v.toLowerCase().includes('actual')).sort();
   BV=buds[buds.length-1]||VERSIONS[0];
 }
-
-function pmon(v){
-  if(!v) return null;
-  if(v instanceof Date) return fmon(v);
-  const d=new Date(String(v));
-  if(!isNaN(d)) return fmon(d);
-  return String(v).trim();
-}
+function pmon(v){ if(!v) return null; if(v instanceof Date) return fmon(v); const d=new Date(String(v)); if(!isNaN(d)) return fmon(d); return String(v).trim(); }
 function fmon(d){ return d.toLocaleString('en-US',{month:'short',year:'2-digit'}); }
 
-// ════════════════════════════════════════════
-// APP SHOW/HIDE
-// ════════════════════════════════════════════
+// ══════════════════════════════════════════
+// SHOW / HIDE
+// ══════════════════════════════════════════
 function showApp(){
   document.getElementById('ws').classList.add('hidden');
   document.getElementById('ac').classList.remove('hidden');
   document.getElementById('vbar').classList.remove('hidden');
   document.getElementById('tw').classList.remove('hidden');
-  setupVBar();
-  renderTab(ACTIVE_TAB);
+  // Show admin login button now that there's content
+  if(!IS_ADMIN) document.getElementById('admbtn').classList.remove('hidden');
+  setupVBar(); renderTab(ACTIVE_TAB);
 }
 function showWaiting(){
   document.getElementById('ws').classList.remove('hidden');
   document.getElementById('ac').classList.add('hidden');
+  document.getElementById('vbar').classList.add('hidden');
+  document.getElementById('tw').classList.add('hidden');
+  // Show admin login button on waiting screen too
+  if(!IS_ADMIN) document.getElementById('admbtn').classList.remove('hidden');
 }
-
 function setupVBar(){
   const bv=document.getElementById('bvs'), av=document.getElementById('avs');
   bv.innerHTML=VERSIONS.map(v=>`<option ${v===BV?'selected':''} value="${v}">${v}</option>`).join('');
@@ -545,96 +592,70 @@ function setupVBar(){
     `<div class="chip" data-m="${m}" onclick="togM('${m}')">${m}</div>`
   ).join('');
 }
-
 function togM(m){
   const i=ACTIVE_M.indexOf(m);
   if(i>-1) ACTIVE_M.splice(i,1); else ACTIVE_M.push(m);
   document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',ACTIVE_M.includes(c.dataset.m)));
   renderTab(ACTIVE_TAB);
 }
-
 function switchTab(id){
   ACTIVE_TAB=id;
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.id===id));
   renderTab(id);
 }
 
-// ════════════════════════════════════════════
+// ══════════════════════════════════════════
 // RENDER ROUTER
-// ════════════════════════════════════════════
+// ══════════════════════════════════════════
 function renderTab(id){
-  const ap = IS_ADMIN ? adminPanel() : '';
-  const tc = document.getElementById('tc');
-  if     (id==='summary') tc.innerHTML = ap + renderSummary();
-  else if(id==='ksa')     tc.innerHTML = ap + renderKSA();
-  else if(BOAT_TABS[id])  tc.innerHTML = ap + renderBoat(BOAT_TABS[id]);
+  const tc=document.getElementById('tc');
+  if     (id==='summary') tc.innerHTML=renderSummary();
+  else if(id==='ksa')     tc.innerHTML=renderKSA();
+  else if(BOAT_TABS[id])  tc.innerHTML=renderBoat(BOAT_TABS[id]);
   attachCH();
 }
 
-function adminPanel(){
-  const info = FILE_META
-    ? `Currently loaded: <strong>${FILE_META.name}</strong> · uploaded ${new Date(FILE_META.uploadedAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}`
-    : 'No file loaded yet.';
-  return `<div class="admin-panel">
-    <div class="admin-panel-info"><h4>🔑 Admin — Data Management</h4><p>${info}</p></div>
-    <button class="btn-primary" onclick="document.getElementById('fi').click()">⬆ Upload New File</button>
-  </div>`;
-}
-
-// ════════════════════════════════════════════
-// SUMMARY TAB
-// ════════════════════════════════════════════
+// ══════════════════════════════════════════
+// SUMMARY
+// ══════════════════════════════════════════
 function renderSummary(){
-  const b=fv(BV), a=fv(AV);
-  let h=`<div class="stitle">Overall — Full Fashion &nbsp;<small style="font-size:12px;font-weight:300;color:var(--text2)">${BV} vs ${AV}</small></div>`;
-  h+=kpiRow(b,a);
-  h+=`<div class="stitle">By Boat</div>`;
-  h+=pivot(b,a,r=>bk(r),'Boat',true);
-  h+=`<div class="stitle">By Country</div>`;
-  h+=pivot(b,a,r=>String(r[C.cty]||'').trim(),'Country');
-  h+=`<div class="stitle">By Boat — Front Liners</div>`;
-  h+=pivot(b.filter(fl),a.filter(fl),r=>bk(r),'Boat',true);
-  h+=`<div class="stitle">By Boat — Back Office</div>`;
-  h+=pivot(b.filter(bo),a.filter(bo),r=>bk(r),'Boat',true);
-  return h;
+  const b=fv(BV),a=fv(AV);
+  return `<div class="stitle">Overall — Full Fashion <small style="font-size:12px;font-weight:300;color:var(--text2)">${BV} vs ${AV}</small></div>`
+    +kpiRow(b,a)
+    +`<div class="stitle">By Boat</div>`+pivot(b,a,r=>bk(r),'Boat',true)
+    +`<div class="stitle">By Country</div>`+pivot(b,a,r=>String(r[C.cty]||'').trim(),'Country')
+    +`<div class="stitle">By Boat — Front Liners</div>`+pivot(b.filter(fl),a.filter(fl),r=>bk(r),'Boat',true)
+    +`<div class="stitle">By Boat — Back Office</div>`+pivot(b.filter(bo),a.filter(bo),r=>bk(r),'Boat',true);
 }
 
-// ════════════════════════════════════════════
-// KSA TAB
-// ════════════════════════════════════════════
+// ══════════════════════════════════════════
+// KSA
+// ══════════════════════════════════════════
 function renderKSA(){
-  const b=fv(BV).filter(rksa), a=fv(AV).filter(rksa);
-  let h=`<div class="stitle">KSA — All Boats</div>`;
-  h+=kpiRow(b,a);
-  h+=`<div class="stitle">By Boat</div>`;
-  h+=pivot(b,a,r=>bk(r),'Boat',true);
-  h+=`<div class="stitle">Back Office — Employee Detail</div>`;
-  h+=backOffice(b.filter(bo),a.filter(bo),'ksa');
-  h+=`<div class="stitle">Front Liners — Cost Center Detail</div>`;
-  h+=frontLiners(b.filter(fl),a.filter(fl),'ksa');
-  return h;
+  const b=fv(BV).filter(rksa),a=fv(AV).filter(rksa);
+  return `<div class="stitle">KSA — All Boats</div>`
+    +kpiRow(b,a)
+    +`<div class="stitle">By Boat</div>`+pivot(b,a,r=>bk(r),'Boat',true)
+    +`<div class="stitle">Back Office — Employee Detail</div>`+backOffice(b.filter(bo),a.filter(bo),'ksa')
+    +`<div class="stitle">Front Liners — Cost Center Detail</div>`+frontLiners(b.filter(fl),a.filter(fl),'ksa');
 }
 
-// ════════════════════════════════════════════
+// ══════════════════════════════════════════
 // BOAT TAB
-// ════════════════════════════════════════════
+// ══════════════════════════════════════════
 function renderBoat(boat){
-  const b=fv(BV).filter(r=>bk(r)===boat), a=fv(AV).filter(r=>bk(r)===boat);
+  const b=fv(BV).filter(r=>bk(r)===boat),a=fv(AV).filter(r=>bk(r)===boat);
   const m=BOAT_META[boat]||{short:boat,cls:'p-blue'};
-  let h=`<div class="stitle"><span class="pill ${m.cls}">${m.short}</span>&nbsp; ${boat}</div>`;
-  h+=kpiRow(b,a);
-  h+=`<div class="stitle">By Country</div>`;
-  h+=pivot(b,a,r=>String(r[C.cty]||'').trim(),'Country');
-  h+=`<div class="stitle">Back Office — Employee Detail</div>`;
-  h+=backOffice(b.filter(bo),a.filter(bo),slug(boat));
-  h+=`<div class="stitle">Front Liners — Cost Center Detail</div>`;
-  h+=frontLiners(b.filter(fl),a.filter(fl),slug(boat));
-  return h;
+  return `<div class="stitle"><span class="pill ${m.cls}">${m.short}</span>&nbsp; ${boat}</div>`
+    +kpiRow(b,a)
+    +`<div class="stitle">By Country</div>`+pivot(b,a,r=>String(r[C.cty]||'').trim(),'Country')
+    +`<div class="stitle">Back Office — Employee Detail</div>`+backOffice(b.filter(bo),a.filter(bo),slug(boat))
+    +`<div class="stitle">Front Liners — Cost Center Detail</div>`+frontLiners(b.filter(fl),a.filter(fl),slug(boat));
 }
 
-// ════════════════════════════════════════════
+// ══════════════════════════════════════════
 // KPI ROW
-// ════════════════════════════════════════════
+// ══════════════════════════════════════════
 function kpiRow(b,a){
   const bHC=sf(b,C.hc),aHC=sf(a,C.hc),bTMC=sf(b,C.tmc),aTMC=sf(a,C.tmc),bNPE=sf(b,C.npe),aNPE=sf(a,C.npe);
   return `<div class="kpi-grid">
@@ -645,44 +666,37 @@ function kpiRow(b,a){
   </div>`;
 }
 function kc(lbl,val,d,pfx,isC){
-  const fn=isC?f0:fM;
-  const dc=d===null?'':(d>0?'pos':d<0?'neg':'neu');
+  const fn=isC?f0:fM, dc=d===null?'':(d>0?'pos':d<0?'neg':'neu');
   const dt=d===null?'':`${d>0?'▲ +':d<0?'▼ ':''}${fn(d)} vs budget`;
   return `<div class="kpi"><div class="kpi-lbl">${lbl}</div><div class="kpi-val">${pfx}${fn(val)}</div>${d!==null?`<div class="kpi-d ${dc}">${dt}</div>`:''}</div>`;
 }
 
-// ════════════════════════════════════════════
+// ══════════════════════════════════════════
 // PIVOT TABLE
-// ════════════════════════════════════════════
+// ══════════════════════════════════════════
 function pivot(br,ar,kfn,lbl,isBoat){
-  const bm=gb(br,kfn), am=gb(ar,kfn);
+  const bm=gb(br,kfn),am=gb(ar,kfn);
   const keys=[...new Set([...Object.keys(bm),...Object.keys(am)])].filter(k=>k).sort();
   if(!keys.length) return '<div class="empty">No data for selected filters.</div>';
-
   let h=`<div class="tw"><table><thead><tr>
-    <th>${lbl}</th>
-    <th>Bud HC</th><th>Act HC</th><th>Var HC</th>
+    <th>${lbl}</th><th>Bud HC</th><th>Act HC</th><th>Var HC</th>
     <th>Bud TMC</th><th>Act TMC</th><th>Var TMC</th>
     <th>Bud NPE</th><th>Act NPE</th><th>Var NPE</th>
   </tr></thead><tbody>`;
-
   keys.forEach(k=>{
     const b=bm[k]||[],a=am[k]||[];
     const bHC=sf(b,C.hc),aHC=sf(a,C.hc),bTMC=sf(b,C.tmc),aTMC=sf(a,C.tmc),bNPE=sf(b,C.npe),aNPE=sf(a,C.npe);
     const vHC=aHC-bHC,vTMC=aTMC-bTMC,vNPE=aNPE-bNPE;
     const meta=isBoat&&BOAT_META[k];
     const lc=meta?`<span class="pill ${meta.cls}">${meta.short}</span>`:(k||'—');
-    h+=`<tr>
-      <td>${lc}</td>
+    h+=`<tr><td>${lc}</td>
       <td class="mono">${f0(bHC)}</td><td class="mono">${f0(aHC)}</td><td class="${vc(vHC)}">${vs(vHC,f0)}</td>
       <td class="mono">${fM(bTMC)}</td><td class="mono">${fM(aTMC)}</td><td class="${vc(vTMC)}">${vs(vTMC,fM)}</td>
       <td class="mono">${fM(bNPE)}</td><td class="mono">${fM(aNPE)}</td><td class="${vc(vNPE)}">${vs(vNPE,fM)}</td>
     </tr>`;
   });
-
   const bHCt=sf(br,C.hc),aHCt=sf(ar,C.hc),bTMCt=sf(br,C.tmc),aTMCt=sf(ar,C.tmc),bNPEt=sf(br,C.npe),aNPEt=sf(ar,C.npe);
-  h+=`<tr style="border-top:2px solid var(--border2);font-weight:600">
-    <td style="color:var(--accent)">TOTAL</td>
+  h+=`<tr style="border-top:2px solid var(--border2);font-weight:600"><td style="color:var(--accent)">TOTAL</td>
     <td class="mono">${f0(bHCt)}</td><td class="mono">${f0(aHCt)}</td><td class="${vc(aHCt-bHCt)}">${vs(aHCt-bHCt,f0)}</td>
     <td class="mono">${fM(bTMCt)}</td><td class="mono">${fM(aTMCt)}</td><td class="${vc(aTMCt-bTMCt)}">${vs(aTMCt-bTMCt,fM)}</td>
     <td class="mono">${fM(bNPEt)}</td><td class="mono">${fM(aNPEt)}</td><td class="${vc(aNPEt-bNPEt)}">${vs(aNPEt-bNPEt,fM)}</td>
@@ -690,25 +704,20 @@ function pivot(br,ar,kfn,lbl,isBoat){
   return h+'</tbody></table></div>';
 }
 
-// ════════════════════════════════════════════
-// BACK OFFICE DETAIL
-// ════════════════════════════════════════════
+// ══════════════════════════════════════════
+// BACK OFFICE
+// ══════════════════════════════════════════
 function backOffice(br,ar,pfx){
-  const bm=gb(br,enm), am=gb(ar,enm);
+  const bm=gb(br,enm),am=gb(ar,enm);
   const keys=[...new Set([...Object.keys(bm),...Object.keys(am)])].filter(k=>k&&k!=='—').sort();
   if(!keys.length) return '<div class="empty">No back office employees found.</div>';
-
   const byBoat={};
   keys.forEach(n=>{ const rows=am[n]||bm[n]||[]; const bt=bk(rows[0])||'OTHER'; if(!byBoat[bt]) byBoat[bt]=[]; byBoat[bt].push(n); });
-
   let h='';
   Object.keys(byBoat).sort().forEach(bt=>{
     const names=byBoat[bt], cid='bo_'+slug(bt)+'_'+pfx, m=BOAT_META[bt]||{short:bt,cls:'p-blue'};
-    h+=`<div class="ch open" onclick="togC('${cid}')">
-      <h4><span class="pill ${m.cls}">${m.short}</span>&nbsp; Back Office (${names.length} employees)</h4>
-      <span class="chev">▼</span></div>
-    <div class="cb open" id="${cid}">
-    <div class="tw"><table><thead><tr>
+    h+=`<div class="ch open" onclick="togC('${cid}')"><h4><span class="pill ${m.cls}">${m.short}</span>&nbsp; Back Office (${names.length} employees)</h4><span class="chev">▼</span></div>
+    <div class="cb open" id="${cid}"><div class="tw"><table><thead><tr>
       <th>Employee</th><th>Country</th><th>Job Title</th>
       <th>Bud HC</th><th>Act HC</th><th>Var HC</th>
       <th>Bud TMC</th><th>Act TMC</th><th>Var TMC</th>
@@ -716,24 +725,20 @@ function backOffice(br,ar,pfx){
       <th style="color:var(--accent)">My Comment <span class="ai-tag">✦ AI</span></th>
       <th style="color:var(--purple)">PP Comment</th>
     </tr></thead><tbody>`;
-
     names.forEach(n=>{
       const b=bm[n]||[],a=am[n]||[],all=[...b,...a];
-      const cty=String(all[0]?.[C.cty]||'').trim();
-      const jt=String(all[0]?.[C.jt]||'').trim();
+      const cty=String(all[0]?.[C.cty]||'').trim(), jt=String(all[0]?.[C.jt]||'').trim();
       const da=String(a[0]?.[C.da]||b[0]?.[C.da]||'').trim();
       const bHC=sf(b,C.hc),aHC=sf(a,C.hc),bTMC=sf(b,C.tmc),aTMC=sf(a,C.tmc);
       const vHC=aHC-bHC,vTMC=aTMC-bTMC;
       const ck=ckk(pfx,'bo',n), sv=COMMENTS[ck]||{};
-      const ai=aiC(jt,vHC,vTMC,da);
       h+=`<tr>
-        <td><strong>${n}</strong></td>
-        <td><span class="pill p-blue">${cty}</span></td>
+        <td><strong>${n}</strong></td><td><span class="pill p-blue">${cty}</span></td>
         <td style="color:var(--text2);font-size:12px">${jt}</td>
         <td class="mono">${f0(bHC)}</td><td class="mono">${f0(aHC)}</td><td class="${vc(vHC)}">${vs(vHC,f0)}</td>
         <td class="mono">${fM(bTMC)}</td><td class="mono">${fM(aTMC)}</td><td class="${vc(vTMC)}">${vs(vTMC,fM)}</td>
         <td style="font-size:11px;color:var(--text2)">${da}</td>
-        <td class="cc"><textarea class="ci mc" data-ck="${ck}" rows="2">${sv.myComment!==undefined?sv.myComment:ai}</textarea><span class="si" id="sm_${ck}">✓ saved</span></td>
+        <td class="cc"><textarea class="ci mc" data-ck="${ck}" rows="2">${sv.myComment!==undefined?sv.myComment:aiC(jt,vHC,vTMC,da)}</textarea><span class="si" id="sm_${ck}">✓ saved</span></td>
         <td class="cc"><textarea class="ci pp" data-ck="${ck}" rows="2">${sv.ppComment||''}</textarea><span class="si" id="sp_${ck}">✓ saved</span></td>
       </tr>`;
     });
@@ -742,49 +747,39 @@ function backOffice(br,ar,pfx){
   return h;
 }
 
-// ════════════════════════════════════════════
-// FRONT LINER DETAIL
-// ════════════════════════════════════════════
+// ══════════════════════════════════════════
+// FRONT LINERS
+// ══════════════════════════════════════════
 function frontLiners(br,ar,pfx){
   const kfn=r=>`${String(r[C.cc]||'').trim()}|||${String(r[C.jt]||'').trim()}`;
-  const bm=gb(br,kfn), am=gb(ar,kfn);
+  const bm=gb(br,kfn),am=gb(ar,kfn);
   const keys=[...new Set([...Object.keys(bm),...Object.keys(am)])].filter(k=>k&&k!=='|||').sort();
   if(!keys.length) return '<div class="empty">No front liner data found.</div>';
-
   const byCC={};
   keys.forEach(k=>{ const [cc]=k.split('|||'); if(!byCC[cc]) byCC[cc]=[]; byCC[cc].push(k); });
-
   let h='';
   Object.keys(byCC).sort().forEach(cc=>{
     const allRows=[...br,...ar].filter(r=>String(r[C.cc]||'').trim()===cc);
-    const ccn=String(allRows[0]?.[C.ccn]||'').trim();
-    const cid='fl_'+slug(cc)+'_'+pfx;
-    h+=`<div class="ch open" onclick="togC('${cid}')">
-      <h4>CC: <strong>${cc}</strong>${ccn?' — '+ccn:''} <span style="color:var(--text3);font-size:12px">(${byCC[cc].length} job titles)</span></h4>
-      <span class="chev">▼</span></div>
-    <div class="cb open" id="${cid}">
-    <div class="tw"><table><thead><tr>
+    const ccn=String(allRows[0]?.[C.ccn]||'').trim(), cid='fl_'+slug(cc)+'_'+pfx;
+    h+=`<div class="ch open" onclick="togC('${cid}')"><h4>CC: <strong>${cc}</strong>${ccn?' — '+ccn:''} <span style="color:var(--text3);font-size:12px">(${byCC[cc].length} job titles)</span></h4><span class="chev">▼</span></div>
+    <div class="cb open" id="${cid}"><div class="tw"><table><thead><tr>
       <th>Job Title</th><th>Country</th>
       <th>Bud HC</th><th>Act HC</th><th>Var HC</th>
       <th>Bud TMC</th><th>Act TMC</th><th>Var TMC</th>
       <th style="color:var(--accent)">My Comment <span class="ai-tag">✦ AI</span></th>
       <th style="color:var(--purple)">PP Comment</th>
     </tr></thead><tbody>`;
-
     byCC[cc].forEach(k=>{
-      const [,jt]=k.split('|||');
-      const b=bm[k]||[],a=am[k]||[];
+      const [,jt]=k.split('|||'), b=bm[k]||[],a=am[k]||[];
       const cty=String([...b,...a][0]?.[C.cty]||'').trim();
       const bHC=sf(b,C.hc),aHC=sf(a,C.hc),bTMC=sf(b,C.tmc),aTMC=sf(a,C.tmc);
       const vHC=aHC-bHC,vTMC=aTMC-bTMC;
       const ck=ckk(pfx,'fl',cc+'_'+jt), sv=COMMENTS[ck]||{};
-      const ai=aiC(jt,vHC,vTMC,null);
       h+=`<tr>
-        <td>${jt||'—'}</td>
-        <td><span class="pill p-blue">${cty}</span></td>
+        <td>${jt||'—'}</td><td><span class="pill p-blue">${cty}</span></td>
         <td class="mono">${f0(bHC)}</td><td class="mono">${f0(aHC)}</td><td class="${vc(vHC)}">${vs(vHC,f0)}</td>
         <td class="mono">${fM(bTMC)}</td><td class="mono">${fM(aTMC)}</td><td class="${vc(vTMC)}">${vs(vTMC,fM)}</td>
-        <td class="cc"><textarea class="ci mc" data-ck="${ck}" rows="2">${sv.myComment!==undefined?sv.myComment:ai}</textarea><span class="si" id="sm_${ck}">✓ saved</span></td>
+        <td class="cc"><textarea class="ci mc" data-ck="${ck}" rows="2">${sv.myComment!==undefined?sv.myComment:aiC(jt,vHC,vTMC,null)}</textarea><span class="si" id="sm_${ck}">✓ saved</span></td>
         <td class="cc"><textarea class="ci pp" data-ck="${ck}" rows="2">${sv.ppComment||''}</textarea><span class="si" id="sp_${ck}">✓ saved</span></td>
       </tr>`;
     });
@@ -793,9 +788,9 @@ function frontLiners(br,ar,pfx){
   return h;
 }
 
-// ════════════════════════════════════════════
+// ══════════════════════════════════════════
 // AI COMMENT
-// ════════════════════════════════════════════
+// ══════════════════════════════════════════
 function aiC(jt,vHC,vTMC,da){
   if(vHC!==0){
     const s=vHC>0?'+':'';
@@ -807,9 +802,9 @@ function aiC(jt,vHC,vTMC,da){
   return 'No variance';
 }
 
-// ════════════════════════════════════════════
+// ══════════════════════════════════════════
 // FIREBASE COMMENTS
-// ════════════════════════════════════════════
+// ══════════════════════════════════════════
 async function saveComment(key,field,val){
   if(!window._firebaseReady) return;
   const {doc,setDoc}=window._firestoreOps;
@@ -821,10 +816,8 @@ async function saveComment(key,field,val){
 async function loadComments(){
   if(!window._firebaseReady) return;
   const {collection,getDocs}=window._firestoreOps;
-  try{
-    const sn=await getDocs(collection(window._db,'comments'));
-    sn.forEach(d=>{ COMMENTS[d.id]=d.data(); });
-  } catch(e){ console.warn(e); }
+  try{ const sn=await getDocs(collection(window._db,'comments')); sn.forEach(d=>{ COMMENTS[d.id]=d.data(); }); }
+  catch(e){ console.warn(e); }
 }
 let ST={};
 function attachCH(){
@@ -841,9 +834,9 @@ function dbs(el,field,pfx){
   },800);
 }
 
-// ════════════════════════════════════════════
+// ══════════════════════════════════════════
 // UTILS
-// ════════════════════════════════════════════
+// ══════════════════════════════════════════
 function fv(v){ return RAW.filter(r=>{ if(String(r[C.ver]||'').trim()!==v) return false; if(!ACTIVE_M.length) return true; return ACTIVE_M.includes(pmon(r[C.mon])); }); }
 function gb(rows,fn){ const m={}; rows.forEach(r=>{ const k=fn(r); if(!m[k]) m[k]=[]; m[k].push(r); }); return m; }
 function sf(rows,idx){ return rows.reduce((s,r)=>s+(parseFloat(r[idx])||0),0); }
