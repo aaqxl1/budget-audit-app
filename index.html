@@ -5,11 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Budget Audit — FY26</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,300;0,600;0,700;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
-
-<!-- SheetJS for Excel parsing -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-<!-- Firebase -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -23,8 +20,8 @@ const firebaseConfig = {
   appId: "1:68647459712:web:06c2506e6453c0d72dbf65"
 };
 
-const firebaseApp = initializeApp(firebaseConfig);
-const db = getFirestore(firebaseApp);
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
 window._db = db;
 window._firestoreOps = { doc, setDoc, getDoc, collection, getDocs };
 window._firebaseReady = true;
@@ -49,1137 +46,822 @@ window.dispatchEvent(new Event('firebaseReady'));
   --blue: #5c9ee0;
   --purple: #9b7fd4;
   --r: 8px;
+  --header-h: 60px;
+  --vbar-h: 45px;
+  --tabs-h: 46px;
 }
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; min-height: 100vh; }
 
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 14px;
-  min-height: 100vh;
-}
-
-/* ─── HEADER ─── */
+/* ── HEADER ── */
 .header {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 0 32px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 60px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 0 32px; display: flex; align-items: center; justify-content: space-between;
+  height: var(--header-h); position: sticky; top: 0; z-index: 300;
 }
-.header-logo {
-  font-family: 'Fraunces', serif;
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--accent);
-  letter-spacing: -0.5px;
-}
-.header-logo span { color: var(--text2); font-weight: 300; font-style: italic; }
-.header-right { display: flex; align-items: center; gap: 16px; }
+.logo { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; color: var(--accent); }
+.logo span { color: var(--text2); font-weight: 300; font-style: italic; }
+.hdr-right { display: flex; align-items: center; gap: 10px; }
 
-/* ─── VERSION SELECTOR ─── */
-.version-bar {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 10px 32px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
+/* ── VERSION BAR ── */
+.vbar {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 0 32px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  height: var(--vbar-h); position: sticky; top: var(--header-h); z-index: 290;
 }
-.version-bar label { color: var(--text2); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
-select, .btn-sm {
-  background: var(--surface2);
-  border: 1px solid var(--border2);
-  color: var(--text);
-  padding: 6px 12px;
-  border-radius: var(--r);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
-  cursor: pointer;
-  outline: none;
-  transition: border-color 0.2s;
-}
-select:hover, .btn-sm:hover { border-color: var(--accent); }
-.badge {
-  background: var(--surface3);
-  border: 1px solid var(--border2);
-  color: var(--text2);
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-family: 'DM Mono', monospace;
-}
-.badge.live { border-color: var(--green); color: var(--green); }
+.vbar label { color: var(--text2); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
 
-/* ─── UPLOAD ZONE ─── */
-#upload-zone {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: calc(100vh - 120px);
-  padding: 40px;
-  text-align: center;
+/* ── TABS ── */
+.tabs-wrap {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 0 32px; overflow-x: auto; white-space: nowrap;
+  position: sticky; top: calc(var(--header-h) + var(--vbar-h)); z-index: 280;
 }
-.upload-card {
-  background: var(--surface);
-  border: 2px dashed var(--border2);
-  border-radius: 16px;
-  padding: 60px 80px;
-  max-width: 520px;
-  width: 100%;
-  transition: border-color 0.3s, background 0.3s;
-  cursor: pointer;
-}
-.upload-card:hover, .upload-card.drag { border-color: var(--accent); background: #1a1810; }
-.upload-icon { font-size: 48px; margin-bottom: 20px; }
-.upload-card h2 { font-family: 'Fraunces', serif; font-weight: 600; font-size: 26px; color: var(--accent); margin-bottom: 10px; }
-.upload-card p { color: var(--text2); line-height: 1.6; margin-bottom: 24px; }
-.btn-primary {
-  background: var(--accent);
-  color: #0f0f0f;
-  border: none;
-  padding: 12px 28px;
-  border-radius: var(--r);
-  font-family: 'DM Sans', sans-serif;
-  font-weight: 500;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
-}
-.btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
-#file-input { display: none; }
-
-/* ─── TABS ─── */
-.tabs-wrapper {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 0 32px;
-  overflow-x: auto;
-}
-.tabs {
-  display: flex;
-  gap: 0;
-  white-space: nowrap;
-}
+.tabs { display: inline-flex; }
 .tab {
-  padding: 14px 20px;
-  cursor: pointer;
-  color: var(--text2);
-  font-size: 13px;
-  font-weight: 400;
-  border-bottom: 2px solid transparent;
-  transition: color 0.2s, border-color 0.2s;
-  white-space: nowrap;
+  padding: 13px 18px; cursor: pointer; color: var(--text2); font-size: 13px;
+  border-bottom: 2px solid transparent; transition: color .2s, border-color .2s; white-space: nowrap;
 }
 .tab:hover { color: var(--text); }
 .tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
 
-/* ─── MAIN CONTENT ─── */
-.main { padding: 32px; max-width: 1600px; }
+/* ── CONTROLS ── */
+select, .btn {
+  background: var(--surface2); border: 1px solid var(--border2); color: var(--text);
+  padding: 5px 11px; border-radius: var(--r); font-family: 'DM Sans', sans-serif;
+  font-size: 13px; cursor: pointer; outline: none; transition: border-color .2s;
+}
+select:hover, .btn:hover { border-color: var(--accent); }
+.btn-primary {
+  background: var(--accent); color: #0f0f0f; border: none;
+  padding: 9px 20px; border-radius: var(--r); font-family: 'DM Sans', sans-serif;
+  font-weight: 500; font-size: 13px; cursor: pointer; transition: background .2s, transform .1s;
+}
+.btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+.badge {
+  background: var(--surface3); border: 1px solid var(--border2); color: var(--text2);
+  padding: 3px 9px; border-radius: 20px; font-size: 11px; font-family: 'DM Mono', monospace;
+}
+.badge.live { border-color: var(--green); color: var(--green); }
+.badge.warn { border-color: var(--accent); color: var(--accent); }
 
-/* ─── SUMMARY CARDS ─── */
-.kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 32px;
+/* ── MONTH CHIPS ── */
+.chips { display: flex; gap: 5px; flex-wrap: wrap; }
+.chip {
+  background: var(--surface2); border: 1px solid var(--border2); color: var(--text2);
+  padding: 3px 9px; border-radius: 20px; font-size: 11px; cursor: pointer; transition: all .2s;
 }
-.kpi-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  padding: 20px;
-}
-.kpi-card .kpi-label { color: var(--text2); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-.kpi-card .kpi-value { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 600; color: var(--text); }
-.kpi-card .kpi-delta { font-family: 'DM Mono', monospace; font-size: 12px; margin-top: 4px; }
-.kpi-card .kpi-delta.pos { color: var(--red); }
-.kpi-card .kpi-delta.neg { color: var(--green); }
-.kpi-card .kpi-delta.neu { color: var(--text2); }
+.chip.on { background: #2a2010; border-color: var(--accent); color: var(--accent); }
 
-/* ─── SECTION TITLE ─── */
-.section-title {
-  font-family: 'Fraunces', serif;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--accent);
-  margin-bottom: 16px;
-  margin-top: 32px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.section-title::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--border);
-}
+/* ── MAIN ── */
+.main { padding: 28px 32px; max-width: 1600px; }
 
-/* ─── TABLE ─── */
-.table-wrap { overflow-x: auto; border-radius: var(--r); border: 1px solid var(--border); margin-bottom: 24px; }
+/* ── KPI ── */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 28px; }
+.kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; }
+.kpi-lbl { color: var(--text2); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.kpi-val { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 600; }
+.kpi-d { font-family: 'DM Mono', monospace; font-size: 12px; margin-top: 4px; }
+.kpi-d.pos { color: var(--red); } .kpi-d.neg { color: var(--green); } .kpi-d.neu { color: var(--text2); }
+
+/* ── SECTION TITLE ── */
+.stitle {
+  font-family: 'Fraunces', serif; font-size: 17px; font-weight: 600; color: var(--accent);
+  margin: 28px 0 14px; display: flex; align-items: center; gap: 10px;
+}
+.stitle::after { content:''; flex:1; height:1px; background: var(--border); }
+
+/* ── TABLE WRAP — scroll container for sticky headers ── */
+.tw {
+  border: 1px solid var(--border); border-radius: var(--r);
+  overflow-x: auto; overflow-y: auto; max-height: 500px;
+  margin-bottom: 20px;
+}
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
-thead tr { background: var(--surface2); }
 thead th {
-  padding: 10px 14px;
-  text-align: left;
-  color: var(--text2);
-  font-weight: 500;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  white-space: nowrap;
-  border-bottom: 1px solid var(--border);
+  padding: 9px 13px; text-align: left; color: var(--text2); font-weight: 500;
+  font-size: 11px; text-transform: uppercase; letter-spacing: .7px; white-space: nowrap;
+  background: var(--surface2);
+  /* sticky within .tw scroll container, NOT the page */
+  position: sticky; top: 0; z-index: 5;
+  box-shadow: 0 1px 0 var(--border2);
 }
-tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+tbody tr { border-bottom: 1px solid var(--border); transition: background .15s; }
 tbody tr:last-child { border-bottom: none; }
 tbody tr:hover { background: var(--surface2); }
-tbody td { padding: 10px 14px; color: var(--text); vertical-align: middle; }
-td.mono { font-family: 'DM Mono', monospace; font-size: 12px; }
-td.pos { color: var(--red); font-family: 'DM Mono', monospace; font-size: 12px; }
-td.neg { color: var(--green); font-family: 'DM Mono', monospace; font-size: 12px; }
-td.neu { color: var(--text2); font-family: 'DM Mono', monospace; font-size: 12px; }
-.pill {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-family: 'DM Mono', monospace;
-  white-space: nowrap;
-}
-.pill-blue { background: #1a2d40; color: var(--blue); }
-.pill-purple { background: #22183a; color: var(--purple); }
-.pill-green { background: #0d2a1a; color: var(--green); }
-.pill-red { background: #2a0f0f; color: var(--red); }
-.pill-gold { background: #2a2010; color: var(--accent); }
+tbody td { padding: 9px 13px; vertical-align: middle; }
+.mono { font-family: 'DM Mono', monospace; font-size: 12px; }
+.pos  { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--red); }
+.neg  { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--green); }
+.neu  { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text2); }
 
-/* ─── COMMENT FIELDS ─── */
-.comment-cell { min-width: 180px; }
-.comment-input {
-  width: 100%;
-  background: var(--surface3);
-  border: 1px solid var(--border2);
-  border-radius: 4px;
-  color: var(--text);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 12px;
-  padding: 5px 8px;
-  resize: none;
-  min-height: 36px;
-  transition: border-color 0.2s;
-}
-.comment-input:focus { outline: none; border-color: var(--accent); }
-.comment-input.pp { border-color: #2a2040; }
-.comment-input.pp:focus { border-color: var(--purple); }
-.save-indicator {
-  font-size: 10px;
-  color: var(--green);
-  opacity: 0;
-  transition: opacity 0.3s;
-  display: block;
-}
-.save-indicator.show { opacity: 1; }
+.pill { display:inline-block; padding:2px 7px; border-radius:20px; font-size:11px; font-family:'DM Mono',monospace; white-space:nowrap; }
+.p-blue   { background:#1a2d40; color:var(--blue); }
+.p-purple { background:#22183a; color:var(--purple); }
+.p-green  { background:#0d2a1a; color:var(--green); }
+.p-gold   { background:#2a2010; color:var(--accent); }
+.p-red    { background:#2a0f0f; color:var(--red); }
 
-/* ─── AI BADGE ─── */
-.ai-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: #1a1a2e;
-  border: 1px solid #2a2a4a;
-  border-radius: 4px;
-  padding: 3px 7px;
-  font-size: 10px;
-  color: #7a7aff;
-  margin-left: 6px;
-  cursor: help;
+/* ── COMMENTS ── */
+.cc { min-width: 170px; }
+.ci {
+  width:100%; background:var(--surface3); border:1px solid var(--border2);
+  border-radius:4px; color:var(--text); font-family:'DM Sans',sans-serif;
+  font-size:12px; padding:4px 7px; resize:none; min-height:34px; transition:border-color .2s;
+}
+.ci:focus { outline:none; border-color:var(--accent); }
+.ci.pp { border-color:#2a2040; }
+.ci.pp:focus { border-color:var(--purple); }
+.si { font-size:10px; color:var(--green); opacity:0; transition:opacity .3s; display:block; }
+.si.on { opacity:1; }
+.ai-tag {
+  display:inline-flex; align-items:center; gap:3px;
+  background:#1a1a2e; border:1px solid #2a2a4a; border-radius:4px;
+  padding:2px 6px; font-size:10px; color:#7a7aff; margin-left:5px;
 }
 
-/* ─── LOADING ─── */
-#loading-screen {
-  position: fixed;
-  inset: 0;
-  background: var(--bg);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
+/* ── COLLAPSIBLE ── */
+.ch {
+  background:var(--surface2); border:1px solid var(--border); border-radius:var(--r);
+  padding:11px 15px; cursor:pointer; display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:7px; transition:background .2s;
 }
-.spinner {
-  width: 40px; height: 40px;
-  border: 3px solid var(--border);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin-bottom: 16px;
+.ch:hover { background:var(--surface3); }
+.ch h4 { font-size:13px; color:var(--text); font-weight:500; }
+.chev { color:var(--text2); font-size:12px; transition:transform .2s; }
+.ch.open .chev { transform:rotate(180deg); }
+.cb { display:none; margin-bottom:14px; }
+.cb.open { display:block; }
+
+/* ── ADMIN PANEL ── */
+.admin-panel {
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--r);
+  padding:16px 20px; margin-bottom:24px;
+  display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
-#loading-screen p { color: var(--text2); font-size: 14px; }
+.admin-panel-info h4 { font-size:13px; color:var(--text); margin-bottom:3px; }
+.admin-panel-info p  { font-size:12px; color:var(--text2); }
 
-/* ─── EMPTY STATE ─── */
-.empty { text-align: center; padding: 60px 20px; color: var(--text3); }
-.empty p { margin-top: 8px; font-size: 13px; }
-
-/* ─── FILTERS ─── */
-.filters {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
-  padding: 14px 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
+/* ── MODAL ── */
+.overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.82);
+  display:flex; align-items:center; justify-content:center; z-index:600;
 }
-.filters label { color: var(--text2); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
-
-/* ─── MONTH FILTER ─── */
-.month-chips { display: flex; gap: 6px; flex-wrap: wrap; }
-.month-chip {
-  background: var(--surface2);
-  border: 1px solid var(--border2);
-  color: var(--text2);
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.2s;
+.modal {
+  background:var(--surface); border:1px solid var(--border2); border-radius:12px;
+  padding:32px; width:340px; max-width:90vw;
 }
-.month-chip.active { background: #2a2010; border-color: var(--accent); color: var(--accent); }
-
-/* ─── COLLAPSIBLE ─── */
-.collapsible-header {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  padding: 12px 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  transition: background 0.2s;
+.modal h3 { font-family:'Fraunces',serif; font-size:19px; color:var(--accent); margin-bottom:7px; }
+.modal p  { color:var(--text2); font-size:13px; margin-bottom:20px; line-height:1.5; }
+.modal input {
+  width:100%; background:var(--surface2); border:1px solid var(--border2); color:var(--text);
+  padding:9px 13px; border-radius:var(--r); font-family:'DM Sans',sans-serif;
+  font-size:14px; outline:none; margin-bottom:6px; transition:border-color .2s;
 }
-.collapsible-header:hover { background: var(--surface3); }
-.collapsible-header h4 { font-size: 14px; color: var(--text); font-weight: 500; }
-.collapsible-header .chevron { color: var(--text2); transition: transform 0.2s; }
-.collapsible-header.open .chevron { transform: rotate(180deg); }
-.collapsible-body { display: none; margin-bottom: 16px; }
-.collapsible-body.open { display: block; }
+.modal input:focus { border-color:var(--accent); }
+.modal-err { color:var(--red); font-size:12px; min-height:16px; margin-bottom:10px; }
+.modal-btns { display:flex; gap:8px; justify-content:flex-end; }
 
-/* ─── TOOLTIP ─── */
-[title] { cursor: help; }
-
-/* ─── RESPONSIVE ─── */
-@media (max-width: 768px) {
-  .main { padding: 16px; }
-  .header { padding: 0 16px; }
-  .version-bar { padding: 10px 16px; }
-  .tabs-wrapper { padding: 0 16px; }
-  .upload-card { padding: 40px 24px; }
+/* ── LOADING ── */
+#ls {
+  position:fixed; inset:0; background:var(--bg);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:999;
 }
+.spin {
+  width:38px; height:38px; border:3px solid var(--border); border-top-color:var(--accent);
+  border-radius:50%; animation:sp .8s linear infinite; margin-bottom:14px;
+}
+@keyframes sp { to { transform:rotate(360deg); } }
+#ls p { color:var(--text2); font-size:13px; }
 
-.hidden { display: none !important; }
+/* ── WAITING ── */
+#ws {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  min-height:calc(100vh - var(--header-h)); padding:40px; text-align:center;
+}
+#ws .wi { font-size:50px; margin-bottom:18px; }
+#ws h2  { font-family:'Fraunces',serif; font-size:24px; color:var(--accent); margin-bottom:8px; }
+#ws p   { color:var(--text2); max-width:380px; line-height:1.6; }
+
+.empty { text-align:center; padding:48px 20px; color:var(--text3); font-size:13px; }
+.hidden { display:none !important; }
+#fi { display:none; }
+
+@media(max-width:768px){
+  .main{padding:16px;}
+  .header,.vbar{padding:0 16px;}
+  .tabs-wrap{padding:0 16px;}
+}
 </style>
 </head>
 <body>
 
-<div id="loading-screen" class="hidden">
-  <div class="spinner"></div>
-  <p id="loading-msg">Processing your file…</p>
+<!-- LOADING -->
+<div id="ls">
+  <div class="spin"></div>
+  <p id="lm">Connecting to Firebase…</p>
+</div>
+
+<!-- ADMIN MODAL -->
+<div class="overlay hidden" id="am">
+  <div class="modal">
+    <h3>Admin Access</h3>
+    <p>Enter the admin password to upload and manage the data file.</p>
+    <input type="password" id="apw" placeholder="Password" onkeydown="if(event.key==='Enter')submitPw()"/>
+    <div class="modal-err" id="aperr"></div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" onclick="submitPw()">Enter</button>
+    </div>
+  </div>
 </div>
 
 <!-- HEADER -->
 <header class="header">
-  <div class="header-logo">Budget Audit <span>FY26</span></div>
-  <div class="header-right">
-    <span id="fb-status" class="badge">⬤ Firebase</span>
-    <span id="file-badge" class="badge hidden">📄 <span id="file-name-badge"></span></span>
-    <button class="btn-sm hidden" id="change-file-btn" onclick="resetApp()">↩ Change File</button>
+  <div class="logo">Budget Audit <span>FY26</span></div>
+  <div class="hdr-right">
+    <span id="fbs" class="badge">⬤ Connecting…</span>
+    <span id="fib" class="badge hidden"></span>
+    <span id="admbadge" class="badge warn hidden">🔑 Admin</span>
+    <button class="btn" id="admbtn" onclick="promptAdmin()">Admin Login</button>
+    <button class="btn hidden" id="admout" onclick="logoutAdmin()">Logout</button>
   </div>
 </header>
 
-<!-- VERSION BAR (hidden until file loaded) -->
-<div class="version-bar hidden" id="version-bar">
-  <label>Budget Version</label>
-  <select id="budget-version-sel"></select>
+<!-- VERSION BAR -->
+<div class="vbar hidden" id="vbar">
+  <label>Budget</label>
+  <select id="bvs"></select>
   <label>vs</label>
-  <select id="actuals-version-sel"></select>
-  <label>Month Filter</label>
-  <div class="month-chips" id="month-chips"></div>
+  <select id="avs"></select>
+  <label>Months</label>
+  <div class="chips" id="mchips"></div>
 </div>
 
-<!-- TABS (hidden until file loaded) -->
-<div class="tabs-wrapper hidden" id="tabs-wrapper">
-  <div class="tabs" id="tabs"></div>
-</div>
-
-<!-- UPLOAD ZONE -->
-<div id="upload-zone">
-  <div class="upload-card" id="drop-zone">
-    <div class="upload-icon">📊</div>
-    <h2>Budget Audit Tool</h2>
-    <p>Upload your FY26 budget & actuals Excel file to begin.<br/>Your data stays in your browser — nothing is uploaded to any server.</p>
-    <button class="btn-primary" onclick="document.getElementById('file-input').click()">Choose Excel File</button>
-    <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFileSelect(event)"/>
-    <p style="margin-top:16px; font-size:12px; color: var(--text3);">Drag & drop also supported</p>
+<!-- TABS -->
+<div class="tabs-wrap hidden" id="tw">
+  <div class="tabs">
+    <div class="tab active" data-id="summary" onclick="switchTab('summary')">📊 Overall — Full Fashion</div>
+    <div class="tab" data-id="ksa"     onclick="switchTab('ksa')">🇸🇦 KSA — All Boats</div>
+    <div class="tab" data-id="asp"     onclick="switchTab('asp')">✦ Aspirational Luxury</div>
+    <div class="tab" data-id="hiend"   onclick="switchTab('hiend')">◈ High-End Luxury</div>
+    <div class="tab" data-id="prem"    onclick="switchTab('prem')">◇ Premium & Delegation</div>
   </div>
 </div>
 
-<!-- APP CONTENT -->
-<div id="app-content" class="hidden">
-  <div class="main" id="tab-content"></div>
+<!-- WAITING -->
+<div id="ws" class="hidden">
+  <div class="wi">📊</div>
+  <h2>No data loaded yet</h2>
+  <p>The admin hasn't uploaded a data file yet. Check back soon or contact your admin.</p>
 </div>
 
-<script>
-// ═══════════════════════════════════════════════════
-// GLOBALS
-// ═══════════════════════════════════════════════════
-let RAW_DATA = [];
-let COMMENTS = {}; // { key: { myComment, ppComment } }
-let VERSIONS = [];
-let MONTHS = [];
-let HRBPS = [];
-let BOATS = [];
-let ACTIVE_TAB = 'summary';
-let BUDGET_VERSION = '';
-let ACTUALS_VERSION = '';
-let ACTIVE_MONTHS = []; // empty = all
+<!-- APP -->
+<div id="ac" class="hidden">
+  <div class="main" id="tc"></div>
+</div>
 
-const BOAT_MAP = {
-  'ASPIRATIONAL LUXURY': { short: 'ASP LUX', color: 'pill-purple' },
-  'HIGH-END LUXURY': { short: 'HI-END', color: 'pill-blue' },
-  'PREMIUM & DELEGATION': { short: 'PREM', color: 'pill-green' },
-  'MGT': { short: 'MGT', color: 'pill-gold' },
+<input type="file" id="fi" accept=".xlsx,.xls" onchange="handleFile(event)"/>
+
+<script>
+// ════════════════════════════════════════════
+// CONFIG — change admin password here
+// ════════════════════════════════════════════
+const ADMIN_PW = 'FashionAudit2026';
+
+const BOAT_META = {
+  'ASPIRATIONAL LUXURY':  { short:'ASP LUX', cls:'p-purple' },
+  'HIGH-END LUXURY':      { short:'HI-END',  cls:'p-blue'   },
+  'PREMIUM & DELEGATION': { short:'PREM',    cls:'p-green'  },
+  'MGT':                  { short:'MGT',     cls:'p-gold'   },
+};
+const BOAT_TABS = {
+  asp:   'ASPIRATIONAL LUXURY',
+  hiend: 'HIGH-END LUXURY',
+  prem:  'PREMIUM & DELEGATION',
 };
 
-// Column name mapping (flexible — handles slight naming differences)
-const COL = {};
+// ════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════
+let RAW=[], COMMENTS={}, VERSIONS=[], MONTHS=[];
+let BV='', AV='', ACTIVE_M=[];
+let ACTIVE_TAB='summary', IS_ADMIN=false, FILE_META=null;
+const C={};
 
-function mapColumns(headerRow) {
-  const norm = s => String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
-  headerRow.forEach((h,i) => {
-    const n = norm(h);
-    if (n.includes('version')) COL.version = i;
-    else if (n.includes('calendarmonth') || (n.includes('calendar') && n.includes('month'))) COL.month = i;
-    else if (n === 'employee' || n === 'employeecode') COL.employee = i;
-    else if (n === 'country') COL.country = i;
-    else if (n === 'hrbp') COL.hrbp = i;
-    else if (n === 'boat') COL.boat = i;
-    else if (n === 'brand') COL.brand = i;
-    else if (n.includes('employeecategory') || n === 'employeecategory') COL.empcat = i;
-    else if (n === 'cc') COL.cc = i;
-    else if (n === 'name' && !COL.ccname) COL.ccname = i;
-    else if (n === 'empname' || n.includes('empname') || n === 'employeename') COL.empname = i;
-    else if (n === 'jobtitle' && !COL.jobtitle) COL.jobtitle = i;
-    else if (n === 'headcount') COL.headcount = i;
-    else if (n.includes('deltaaction')) COL.deltaaction = i;
-    else if (n.includes('totalmanpowercost') || n.includes('totalmanpower')) COL.tmc = i;
-    else if (n.includes('totalnonpayroll') || n.includes('npe')) COL.npe = i;
-    else if (n.includes('totalfix')) COL.totalfix = i;
-    else if (n.includes('totalvariable')) COL.totalvar = i;
-    else if (n.includes('grade')) COL.grade = i;
-  });
-}
-
-// ═══════════════════════════════════════════════════
-// FIREBASE
-// ═══════════════════════════════════════════════════
-let fbReady = false;
-window.addEventListener('firebaseReady', () => {
-  fbReady = true;
-  document.getElementById('fb-status').textContent = '⬤ Firebase';
-  document.getElementById('fb-status').classList.add('live');
-  loadAllComments();
+// ════════════════════════════════════════════
+// FIREBASE READY
+// ════════════════════════════════════════════
+window.addEventListener('firebaseReady', async ()=>{
+  document.getElementById('fbs').textContent='⬤ Firebase';
+  document.getElementById('fbs').classList.add('live');
+  await loadComments();
+  await tryLoadFile();
 });
 
-async function saveComment(key, field, value) {
-  if (!fbReady) return;
+// ════════════════════════════════════════════
+// FILE — save to Firestore as base64 chunks
+// ════════════════════════════════════════════
+async function saveFile(buf, name){
+  showL('Saving to cloud…');
   const { doc, setDoc } = window._firestoreOps;
   const db = window._db;
-  if (!COMMENTS[key]) COMMENTS[key] = {};
-  COMMENTS[key][field] = value;
-  try {
-    await setDoc(doc(db, 'comments', key), COMMENTS[key], { merge: true });
-  } catch(e) { console.warn('Firebase save error:', e); }
+
+  const u8 = new Uint8Array(buf);
+  let bin = '';
+  for(let i=0;i<u8.length;i+=8192) bin += String.fromCharCode(...u8.subarray(i,i+8192));
+  const b64 = btoa(bin);
+
+  const CHUNK = 700000;
+  const chunks = [];
+  for(let i=0;i<b64.length;i+=CHUNK) chunks.push(b64.slice(i,i+CHUNK));
+
+  const meta = { name, uploadedAt: new Date().toISOString(), chunks: chunks.length };
+  await setDoc(doc(db,'filestore','meta'), meta);
+  for(let i=0;i<chunks.length;i++){
+    updateL(`Saving… (${i+1}/${chunks.length})`);
+    await setDoc(doc(db,'filestore',`c${i}`), { d: chunks[i] });
+  }
+  FILE_META = meta;
+  updateFileBadge();
 }
 
-async function loadAllComments() {
-  if (!fbReady) return;
-  const { collection, getDocs } = window._firestoreOps;
+async function tryLoadFile(){
+  const { doc, getDoc } = window._firestoreOps;
   const db = window._db;
   try {
-    const snap = await getDocs(collection(db, 'comments'));
-    snap.forEach(d => { COMMENTS[d.id] = d.data(); });
-  } catch(e) { console.warn('Firebase load error:', e); }
-}
-
-// ═══════════════════════════════════════════════════
-// FILE HANDLING
-// ═══════════════════════════════════════════════════
-const dropZone = document.getElementById('drop-zone');
-dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
-dropZone.addEventListener('drop', e => {
-  e.preventDefault(); dropZone.classList.remove('drag');
-  const file = e.dataTransfer.files[0];
-  if (file) processFile(file);
-});
-
-function handleFileSelect(e) { if (e.target.files[0]) processFile(e.target.files[0]); }
-
-function processFile(file) {
-  showLoading('Reading Excel file…');
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      updateLoading('Parsing data…');
-      const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-      parseData(rows);
-      document.getElementById('file-name-badge').textContent = file.name;
-      document.getElementById('file-badge').classList.remove('hidden');
-      document.getElementById('change-file-btn').classList.remove('hidden');
-      hideLoading();
-      showApp();
-    } catch(err) {
-      hideLoading();
-      alert('Error reading file: ' + err.message);
+    updateL('Checking for stored data…');
+    const ms = await getDoc(doc(db,'filestore','meta'));
+    if(!ms.exists()){ hideL(); showWaiting(); return; }
+    FILE_META = ms.data();
+    const n = FILE_META.chunks || 1;
+    let b64='';
+    for(let i=0;i<n;i++){
+      updateL(`Loading data… (${i+1}/${n})`);
+      const cs = await getDoc(doc(db,'filestore',`c${i}`));
+      if(cs.exists()) b64 += cs.data().d;
     }
+    updateL('Parsing…');
+    const bin = atob(b64);
+    const u8 = new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i);
+    const wb = XLSX.read(u8.buffer,{type:'array',cellDates:true});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    parseData(XLSX.utils.sheet_to_json(ws,{header:1,defval:''}));
+    updateFileBadge();
+    hideL();
+    showApp();
+  } catch(e){
+    console.warn(e); hideL(); showWaiting();
+  }
+}
+
+function updateFileBadge(){
+  if(!FILE_META) return;
+  const d = new Date(FILE_META.uploadedAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'});
+  const b = document.getElementById('fib');
+  b.textContent = `📄 ${FILE_META.name} · ${d}`;
+  b.classList.remove('hidden');
+}
+
+// ════════════════════════════════════════════
+// ADMIN
+// ════════════════════════════════════════════
+function promptAdmin(){ document.getElementById('am').classList.remove('hidden'); document.getElementById('apw').focus(); }
+function closeModal(){ document.getElementById('am').classList.add('hidden'); document.getElementById('aperr').textContent=''; document.getElementById('apw').value=''; }
+function submitPw(){
+  if(document.getElementById('apw').value === ADMIN_PW){
+    IS_ADMIN=true; closeModal();
+    document.getElementById('admbadge').classList.remove('hidden');
+    document.getElementById('admbtn').classList.add('hidden');
+    document.getElementById('admout').classList.remove('hidden');
+    renderTab(ACTIVE_TAB);
+  } else {
+    document.getElementById('aperr').textContent='Incorrect password.';
+  }
+}
+function logoutAdmin(){
+  IS_ADMIN=false;
+  document.getElementById('admbadge').classList.add('hidden');
+  document.getElementById('admbtn').classList.remove('hidden');
+  document.getElementById('admout').classList.add('hidden');
+  renderTab(ACTIVE_TAB);
+}
+
+// ════════════════════════════════════════════
+// FILE UPLOAD
+// ════════════════════════════════════════════
+function handleFile(e){ if(e.target.files[0]) processFile(e.target.files[0]); }
+function processFile(file){
+  showL('Reading file…');
+  const r = new FileReader();
+  r.onload = async e=>{
+    try{
+      updateL('Parsing…');
+      const wb = XLSX.read(e.target.result,{type:'array',cellDates:true});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      parseData(XLSX.utils.sheet_to_json(ws,{header:1,defval:''}));
+      await saveFile(e.target.result, file.name);
+      hideL(); showApp();
+    } catch(err){ hideL(); alert('Error: '+err.message); }
   };
-  reader.readAsArrayBuffer(file);
+  r.readAsArrayBuffer(file);
 }
 
-function parseData(rows) {
-  if (rows.length < 2) return;
-  const header = rows[0];
-  mapColumns(header);
-
-  RAW_DATA = rows.slice(1).filter(r => r.some(c => c !== ''));
-
-  // Extract versions
-  const vset = new Set();
-  RAW_DATA.forEach(r => { if (r[COL.version]) vset.add(String(r[COL.version]).trim()); });
-  VERSIONS = Array.from(vset).sort();
-
-  // Extract months
-  const mset = new Set();
-  RAW_DATA.forEach(r => {
-    const m = parseMonth(r[COL.month]);
-    if (m) mset.add(m);
+// ════════════════════════════════════════════
+// DATA PARSING
+// ════════════════════════════════════════════
+function mapCols(hdr){
+  const n = s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  hdr.forEach((h,i)=>{
+    const v=n(h);
+    if(v.includes('version'))                                             C.ver=i;
+    if(v.includes('calendarmonth')||(v.includes('calendar')&&v.includes('month'))) C.mon=i;
+    if(v==='employee'||v==='employeecode')                                C.emp=i;
+    if(v==='country')                                                     C.cty=i;
+    if(v==='hrbp')                                                        C.hrbp=i;
+    if(v==='boat')                                                        C.boat=i;
+    if(v.includes('employeecategory'))                                    C.cat=i;
+    if(v==='cc')                                                          C.cc=i;
+    if(v==='name'&&C.ccn===undefined)                                     C.ccn=i;
+    if(v==='empname'||v==='employeename'||v.includes('empname'))         C.enm=i;
+    if(v==='jobtitle'&&C.jt===undefined)                                  C.jt=i;
+    if(v==='headcount')                                                   C.hc=i;
+    if(v.includes('deltaaction'))                                         C.da=i;
+    if(v.includes('totalmanpowercost')||v.includes('totalmanpower'))      C.tmc=i;
+    if(v.includes('totalnonpayroll'))                                     C.npe=i;
   });
-  MONTHS = Array.from(mset).sort();
-  ACTIVE_MONTHS = [];
+}
 
-  // Extract HRBPs, Boats
-  const hset = new Set(), bset = new Set();
-  RAW_DATA.forEach(r => {
-    if (r[COL.hrbp]) hset.add(String(r[COL.hrbp]).trim());
-    if (r[COL.boat]) bset.add(String(r[COL.boat]).trim().toUpperCase());
+function parseData(rows){
+  if(rows.length<2) return;
+  mapCols(rows[0]);
+  RAW = rows.slice(1).filter(r=>r.some(c=>c!==''));
+  const vs=new Set(), ms=new Set();
+  RAW.forEach(r=>{
+    if(r[C.ver]) vs.add(String(r[C.ver]).trim());
+    const m=pmon(r[C.mon]); if(m) ms.add(m);
   });
-  HRBPS = Array.from(hset).sort();
-  BOATS = Array.from(bset).filter(b => b && b !== 'MGT').sort();
-
-  // Set defaults
-  const actuals = VERSIONS.find(v => v.toLowerCase().includes('actual')) || VERSIONS[VERSIONS.length - 1];
-  const budgets = VERSIONS.filter(v => !v.toLowerCase().includes('actual')).sort();
-  ACTUALS_VERSION = actuals;
-  BUDGET_VERSION = budgets[budgets.length - 1] || VERSIONS[0];
+  VERSIONS=[...vs].sort();
+  MONTHS=[...ms].sort((a,b)=>new Date('01 '+a)-new Date('01 '+b));
+  ACTIVE_M=[];
+  AV=VERSIONS.find(v=>v.toLowerCase().includes('actual'))||VERSIONS[VERSIONS.length-1];
+  const buds=VERSIONS.filter(v=>!v.toLowerCase().includes('actual')).sort();
+  BV=buds[buds.length-1]||VERSIONS[0];
 }
 
-function parseMonth(val) {
-  if (!val) return null;
-  if (val instanceof Date) return fmtMonth(val);
-  const s = String(val);
-  const d = new Date(s);
-  if (!isNaN(d)) return fmtMonth(d);
-  return s.trim();
+function pmon(v){
+  if(!v) return null;
+  if(v instanceof Date) return fmon(v);
+  const d=new Date(String(v));
+  if(!isNaN(d)) return fmon(d);
+  return String(v).trim();
 }
+function fmon(d){ return d.toLocaleString('en-US',{month:'short',year:'2-digit'}); }
 
-function fmtMonth(d) {
-  return d.toLocaleString('en-US', { month: 'short', year: '2-digit' });
-}
-
-// ═══════════════════════════════════════════════════
-// APP INITIALIZATION
-// ═══════════════════════════════════════════════════
-function showApp() {
-  document.getElementById('upload-zone').classList.add('hidden');
-  document.getElementById('app-content').classList.remove('hidden');
-  document.getElementById('version-bar').classList.remove('hidden');
-  document.getElementById('tabs-wrapper').classList.remove('hidden');
-  setupVersionBar();
-  setupTabs();
+// ════════════════════════════════════════════
+// APP SHOW/HIDE
+// ════════════════════════════════════════════
+function showApp(){
+  document.getElementById('ws').classList.add('hidden');
+  document.getElementById('ac').classList.remove('hidden');
+  document.getElementById('vbar').classList.remove('hidden');
+  document.getElementById('tw').classList.remove('hidden');
+  setupVBar();
   renderTab(ACTIVE_TAB);
 }
-
-function resetApp() {
-  RAW_DATA = [];
-  document.getElementById('upload-zone').classList.remove('hidden');
-  document.getElementById('app-content').classList.add('hidden');
-  document.getElementById('version-bar').classList.add('hidden');
-  document.getElementById('tabs-wrapper').classList.add('hidden');
-  document.getElementById('file-badge').classList.add('hidden');
-  document.getElementById('change-file-btn').classList.add('hidden');
-  document.getElementById('file-input').value = '';
+function showWaiting(){
+  document.getElementById('ws').classList.remove('hidden');
+  document.getElementById('ac').classList.add('hidden');
 }
 
-function setupVersionBar() {
-  const bsel = document.getElementById('budget-version-sel');
-  const asel = document.getElementById('actuals-version-sel');
-  bsel.innerHTML = VERSIONS.map(v => `<option ${v===BUDGET_VERSION?'selected':''} value="${v}">${v}</option>`).join('');
-  asel.innerHTML = VERSIONS.map(v => `<option ${v===ACTUALS_VERSION?'selected':''} value="${v}">${v}</option>`).join('');
-  bsel.onchange = () => { BUDGET_VERSION = bsel.value; renderTab(ACTIVE_TAB); };
-  asel.onchange = () => { ACTUALS_VERSION = asel.value; renderTab(ACTIVE_TAB); };
-
-  // Month chips
-  const mc = document.getElementById('month-chips');
-  mc.innerHTML = MONTHS.map(m =>
-    `<div class="month-chip" data-m="${m}" onclick="toggleMonth('${m}')">${m}</div>`
+function setupVBar(){
+  const bv=document.getElementById('bvs'), av=document.getElementById('avs');
+  bv.innerHTML=VERSIONS.map(v=>`<option ${v===BV?'selected':''} value="${v}">${v}</option>`).join('');
+  av.innerHTML=VERSIONS.map(v=>`<option ${v===AV?'selected':''} value="${v}">${v}</option>`).join('');
+  bv.onchange=()=>{ BV=bv.value; renderTab(ACTIVE_TAB); };
+  av.onchange=()=>{ AV=av.value; renderTab(ACTIVE_TAB); };
+  document.getElementById('mchips').innerHTML=MONTHS.map(m=>
+    `<div class="chip" data-m="${m}" onclick="togM('${m}')">${m}</div>`
   ).join('');
 }
 
-function toggleMonth(m) {
-  const idx = ACTIVE_MONTHS.indexOf(m);
-  if (idx > -1) ACTIVE_MONTHS.splice(idx, 1);
-  else ACTIVE_MONTHS.push(m);
-  document.querySelectorAll('.month-chip').forEach(c => {
-    c.classList.toggle('active', ACTIVE_MONTHS.includes(c.dataset.m));
-  });
+function togM(m){
+  const i=ACTIVE_M.indexOf(m);
+  if(i>-1) ACTIVE_M.splice(i,1); else ACTIVE_M.push(m);
+  document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',ACTIVE_M.includes(c.dataset.m)));
   renderTab(ACTIVE_TAB);
 }
 
-function setupTabs() {
-  const tabs = document.getElementById('tabs');
-  const tabList = [
-    { id: 'summary', label: '📊 Summary' },
-    ...HRBPS.map(h => ({ id: 'hrbp_' + slug(h), label: '👤 ' + h })),
-    ...BOATS.filter(b => b !== 'MGT').map(b => ({ id: 'boat_' + slug(b), label: '🚢 ' + shortBoat(b) })),
-  ];
-  tabs.innerHTML = tabList.map(t =>
-    `<div class="tab ${t.id===ACTIVE_TAB?'active':''}" data-id="${t.id}" onclick="switchTab('${t.id}')">${t.label}</div>`
-  ).join('');
-}
-
-function switchTab(id) {
-  ACTIVE_TAB = id;
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.id === id));
+function switchTab(id){
+  ACTIVE_TAB=id;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.id===id));
   renderTab(id);
 }
 
-// ═══════════════════════════════════════════════════
-// DATA FILTERING
-// ═══════════════════════════════════════════════════
-function filterByVersion(version) {
-  return RAW_DATA.filter(r => {
-    const v = String(r[COL.version]||'').trim();
-    if (v !== version) return false;
-    if (ACTIVE_MONTHS.length === 0) return true;
-    const m = parseMonth(r[COL.month]);
-    return ACTIVE_MONTHS.includes(m);
-  });
+// ════════════════════════════════════════════
+// RENDER ROUTER
+// ════════════════════════════════════════════
+function renderTab(id){
+  const ap = IS_ADMIN ? adminPanel() : '';
+  const tc = document.getElementById('tc');
+  if     (id==='summary') tc.innerHTML = ap + renderSummary();
+  else if(id==='ksa')     tc.innerHTML = ap + renderKSA();
+  else if(BOAT_TABS[id])  tc.innerHTML = ap + renderBoat(BOAT_TABS[id]);
+  attachCH();
 }
 
-function groupBy(rows, keyFn) {
-  const map = {};
-  rows.forEach(r => {
-    const k = keyFn(r);
-    if (!map[k]) map[k] = [];
-    map[k].push(r);
-  });
-  return map;
-}
-
-function sumField(rows, colIdx) {
-  return rows.reduce((s, r) => s + (parseFloat(r[colIdx]) || 0), 0);
-}
-
-function variance(act, bud) { return act - bud; }
-function varPct(act, bud) { return bud !== 0 ? ((act - bud) / Math.abs(bud)) * 100 : 0; }
-
-// ═══════════════════════════════════════════════════
-// RENDERING
-// ═══════════════════════════════════════════════════
-function renderTab(id) {
-  const content = document.getElementById('tab-content');
-  if (id === 'summary') { content.innerHTML = renderSummary(); attachCommentHandlers(); return; }
-  if (id.startsWith('hrbp_')) {
-    const hrbp = HRBPS.find(h => slug(h) === id.replace('hrbp_',''));
-    content.innerHTML = renderHRBP(hrbp);
-    attachCommentHandlers();
-    return;
-  }
-  if (id.startsWith('boat_')) {
-    const boat = BOATS.find(b => slug(b) === id.replace('boat_',''));
-    content.innerHTML = renderBoat(boat);
-    attachCommentHandlers();
-    return;
-  }
-}
-
-// ─── SUMMARY TAB ───
-function renderSummary() {
-  const budRows = filterByVersion(BUDGET_VERSION);
-  const actRows = filterByVersion(ACTUALS_VERSION);
-
-  const bHC = sumField(budRows, COL.headcount);
-  const aHC = sumField(actRows, COL.headcount);
-  const bTMC = sumField(budRows, COL.tmc);
-  const aTMC = sumField(actRows, COL.tmc);
-  const bNPE = sumField(budRows, COL.npe);
-  const aNPE = sumField(actRows, COL.npe);
-
-  let html = `<h2 class="section-title">Overall Summary — ${BUDGET_VERSION} vs ${ACTUALS_VERSION}</h2>`;
-
-  // KPI cards
-  html += `<div class="kpi-grid">
-    ${kpiCard('Total Headcount', aHC, variance(aHC,bHC), '', true)}
-    ${kpiCard('Manpower Cost', aTMC, variance(aTMC,bTMC), '$')}
-    ${kpiCard('Non-Payroll Elements', aNPE, variance(aNPE,bNPE), '$')}
-    ${kpiCard('Budget HC', bHC, null, '', true)}
+function adminPanel(){
+  const info = FILE_META
+    ? `Currently loaded: <strong>${FILE_META.name}</strong> · uploaded ${new Date(FILE_META.uploadedAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}`
+    : 'No file loaded yet.';
+  return `<div class="admin-panel">
+    <div class="admin-panel-info"><h4>🔑 Admin — Data Management</h4><p>${info}</p></div>
+    <button class="btn-primary" onclick="document.getElementById('fi').click()">⬆ Upload New File</button>
   </div>`;
-
-  // By Boat
-  html += `<h2 class="section-title">By Boat</h2>`;
-  html += pivotTable(budRows, actRows, r => String(r[COL.boat]||'').trim().toUpperCase(), 'Boat', true);
-
-  // By Country
-  html += `<h2 class="section-title">By Country</h2>`;
-  html += pivotTable(budRows, actRows, r => String(r[COL.country]||'').trim(), 'Country');
-
-  // By Boat — Front Liners
-  html += `<h2 class="section-title">By Boat — Front Liners</h2>`;
-  const bFL = budRows.filter(r => isFrontLiner(r));
-  const aFL = actRows.filter(r => isFrontLiner(r));
-  html += pivotTable(bFL, aFL, r => String(r[COL.boat]||'').trim().toUpperCase(), 'Boat (Front Liners)', true);
-
-  // By Boat — Back Office
-  html += `<h2 class="section-title">By Boat — Back Office</h2>`;
-  const bBO = budRows.filter(r => !isFrontLiner(r));
-  const aBO = actRows.filter(r => !isFrontLiner(r));
-  html += pivotTable(bBO, aBO, r => String(r[COL.boat]||'').trim().toUpperCase(), 'Boat (Back Office)', true);
-
-  return html;
 }
 
-// ─── HRBP TAB ───
-function renderHRBP(hrbp) {
-  if (!hrbp) return '<div class="empty">HRBP not found.</div>';
-  const budRows = filterByVersion(BUDGET_VERSION).filter(r => String(r[COL.hrbp]||'').trim() === hrbp);
-  const actRows = filterByVersion(ACTUALS_VERSION).filter(r => String(r[COL.hrbp]||'').trim() === hrbp);
-
-  let html = `<h2 class="section-title">People Partner: ${hrbp}</h2>`;
-
-  // Summary across all boats for this PP
-  html += `<div style="margin-bottom:8px"><span class="pill pill-gold">All Boats</span></div>`;
-  html += pivotTable(budRows, actRows, r => String(r[COL.boat]||'').trim().toUpperCase(), 'Boat', true);
-
-  // By Country
-  html += `<h2 class="section-title">By Country</h2>`;
-  html += pivotTable(budRows, actRows, r => String(r[COL.country]||'').trim(), 'Country');
-
-  // Back Office detail
-  html += `<h2 class="section-title">Back Office — Employee Detail</h2>`;
-  html += renderBackOfficeDetail(
-    budRows.filter(r => !isFrontLiner(r)),
-    actRows.filter(r => !isFrontLiner(r)),
-    'hrbp_' + slug(hrbp)
-  );
-
-  // Front Liner detail
-  html += `<h2 class="section-title">Front Liners — Cost Center Detail</h2>`;
-  html += renderFrontLinerDetail(
-    budRows.filter(r => isFrontLiner(r)),
-    actRows.filter(r => isFrontLiner(r)),
-    'hrbp_' + slug(hrbp)
-  );
-
-  return html;
+// ════════════════════════════════════════════
+// SUMMARY TAB
+// ════════════════════════════════════════════
+function renderSummary(){
+  const b=fv(BV), a=fv(AV);
+  let h=`<div class="stitle">Overall — Full Fashion &nbsp;<small style="font-size:12px;font-weight:300;color:var(--text2)">${BV} vs ${AV}</small></div>`;
+  h+=kpiRow(b,a);
+  h+=`<div class="stitle">By Boat</div>`;
+  h+=pivot(b,a,r=>bk(r),'Boat',true);
+  h+=`<div class="stitle">By Country</div>`;
+  h+=pivot(b,a,r=>String(r[C.cty]||'').trim(),'Country');
+  h+=`<div class="stitle">By Boat — Front Liners</div>`;
+  h+=pivot(b.filter(fl),a.filter(fl),r=>bk(r),'Boat',true);
+  h+=`<div class="stitle">By Boat — Back Office</div>`;
+  h+=pivot(b.filter(bo),a.filter(bo),r=>bk(r),'Boat',true);
+  return h;
 }
 
-// ─── BOAT TAB ───
-function renderBoat(boat) {
-  if (!boat) return '<div class="empty">Boat not found.</div>';
-  const budRows = filterByVersion(BUDGET_VERSION).filter(r => String(r[COL.boat]||'').trim().toUpperCase() === boat);
-  const actRows = filterByVersion(ACTUALS_VERSION).filter(r => String(r[COL.boat]||'').trim().toUpperCase() === boat);
-
-  let html = `<h2 class="section-title">Boat: ${boat}</h2>`;
-
-  // By Country
-  html += `<div style="margin-bottom:8px"><span class="pill ${BOAT_MAP[boat]?.color||'pill-blue'}">${shortBoat(boat)}</span></div>`;
-  html += `<h2 class="section-title">By Country</h2>`;
-  html += pivotTable(budRows, actRows, r => String(r[COL.country]||'').trim(), 'Country');
-
-  // By HRBP
-  html += `<h2 class="section-title">By People Partner</h2>`;
-  html += pivotTable(budRows, actRows, r => String(r[COL.hrbp]||'').trim(), 'HRBP');
-
-  // Back Office
-  html += `<h2 class="section-title">Back Office — Employee Detail</h2>`;
-  html += renderBackOfficeDetail(
-    budRows.filter(r => !isFrontLiner(r)),
-    actRows.filter(r => !isFrontLiner(r)),
-    'boat_' + slug(boat)
-  );
-
-  // Front Liners
-  html += `<h2 class="section-title">Front Liners — Cost Center Detail</h2>`;
-  html += renderFrontLinerDetail(
-    budRows.filter(r => isFrontLiner(r)),
-    actRows.filter(r => isFrontLiner(r)),
-    'boat_' + slug(boat)
-  );
-
-  return html;
+// ════════════════════════════════════════════
+// KSA TAB
+// ════════════════════════════════════════════
+function renderKSA(){
+  const b=fv(BV).filter(rksa), a=fv(AV).filter(rksa);
+  let h=`<div class="stitle">KSA — All Boats</div>`;
+  h+=kpiRow(b,a);
+  h+=`<div class="stitle">By Boat</div>`;
+  h+=pivot(b,a,r=>bk(r),'Boat',true);
+  h+=`<div class="stitle">Back Office — Employee Detail</div>`;
+  h+=backOffice(b.filter(bo),a.filter(bo),'ksa');
+  h+=`<div class="stitle">Front Liners — Cost Center Detail</div>`;
+  h+=frontLiners(b.filter(fl),a.filter(fl),'ksa');
+  return h;
 }
 
-// ─── PIVOT TABLE ───
-function pivotTable(budRows, actRows, keyFn, label, isBoat) {
-  const bMap = groupBy(budRows, keyFn);
-  const aMap = groupBy(actRows, keyFn);
-  const keys = Array.from(new Set([...Object.keys(bMap), ...Object.keys(aMap)])).filter(k => k).sort();
+// ════════════════════════════════════════════
+// BOAT TAB
+// ════════════════════════════════════════════
+function renderBoat(boat){
+  const b=fv(BV).filter(r=>bk(r)===boat), a=fv(AV).filter(r=>bk(r)===boat);
+  const m=BOAT_META[boat]||{short:boat,cls:'p-blue'};
+  let h=`<div class="stitle"><span class="pill ${m.cls}">${m.short}</span>&nbsp; ${boat}</div>`;
+  h+=kpiRow(b,a);
+  h+=`<div class="stitle">By Country</div>`;
+  h+=pivot(b,a,r=>String(r[C.cty]||'').trim(),'Country');
+  h+=`<div class="stitle">Back Office — Employee Detail</div>`;
+  h+=backOffice(b.filter(bo),a.filter(bo),slug(boat));
+  h+=`<div class="stitle">Front Liners — Cost Center Detail</div>`;
+  h+=frontLiners(b.filter(fl),a.filter(fl),slug(boat));
+  return h;
+}
 
-  if (!keys.length) return '<div class="empty">No data for selected filters.</div>';
+// ════════════════════════════════════════════
+// KPI ROW
+// ════════════════════════════════════════════
+function kpiRow(b,a){
+  const bHC=sf(b,C.hc),aHC=sf(a,C.hc),bTMC=sf(b,C.tmc),aTMC=sf(a,C.tmc),bNPE=sf(b,C.npe),aNPE=sf(a,C.npe);
+  return `<div class="kpi-grid">
+    ${kc('Actual Headcount',aHC,aHC-bHC,'',true)}
+    ${kc('Budget Headcount',bHC,null,'',true)}
+    ${kc('Actual Manpower Cost',aTMC,aTMC-bTMC,'$',false)}
+    ${kc('Actual NPE',aNPE,aNPE-bNPE,'$',false)}
+  </div>`;
+}
+function kc(lbl,val,d,pfx,isC){
+  const fn=isC?f0:fM;
+  const dc=d===null?'':(d>0?'pos':d<0?'neg':'neu');
+  const dt=d===null?'':`${d>0?'▲ +':d<0?'▼ ':''}${fn(d)} vs budget`;
+  return `<div class="kpi"><div class="kpi-lbl">${lbl}</div><div class="kpi-val">${pfx}${fn(val)}</div>${d!==null?`<div class="kpi-d ${dc}">${dt}</div>`:''}</div>`;
+}
 
-  let html = `<div class="table-wrap"><table>
-    <thead><tr>
-      <th>${label}</th>
-      <th>Bud HC</th><th>Act HC</th><th>Var HC</th>
-      <th>Bud TMC</th><th>Act TMC</th><th>Var TMC</th>
-      <th>Bud NPE</th><th>Act NPE</th><th>Var NPE</th>
-    </tr></thead><tbody>`;
+// ════════════════════════════════════════════
+// PIVOT TABLE
+// ════════════════════════════════════════════
+function pivot(br,ar,kfn,lbl,isBoat){
+  const bm=gb(br,kfn), am=gb(ar,kfn);
+  const keys=[...new Set([...Object.keys(bm),...Object.keys(am)])].filter(k=>k).sort();
+  if(!keys.length) return '<div class="empty">No data for selected filters.</div>';
 
-  keys.forEach(k => {
-    const br = bMap[k] || [];
-    const ar = aMap[k] || [];
-    const bHC = sumField(br, COL.headcount), aHC = sumField(ar, COL.headcount);
-    const bTMC = sumField(br, COL.tmc), aTMC = sumField(ar, COL.tmc);
-    const bNPE = sumField(br, COL.npe), aNPE = sumField(ar, COL.npe);
+  let h=`<div class="tw"><table><thead><tr>
+    <th>${lbl}</th>
+    <th>Bud HC</th><th>Act HC</th><th>Var HC</th>
+    <th>Bud TMC</th><th>Act TMC</th><th>Var TMC</th>
+    <th>Bud NPE</th><th>Act NPE</th><th>Var NPE</th>
+  </tr></thead><tbody>`;
 
-    const vHC = variance(aHC, bHC);
-    const vTMC = variance(aTMC, bTMC);
-    const vNPE = variance(aNPE, bNPE);
-
-    const boatMeta = isBoat && BOAT_MAP[k];
-    const labelCell = boatMeta
-      ? `<span class="pill ${boatMeta.color}">${boatMeta.short}</span>`
-      : k || '—';
-
-    html += `<tr>
-      <td>${labelCell}</td>
-      <td class="mono">${fmt0(bHC)}</td>
-      <td class="mono">${fmt0(aHC)}</td>
-      <td class="${varClass(vHC)}">${vHC > 0 ? '+' : ''}${fmt0(vHC)}</td>
-      <td class="mono">${fmtM(bTMC)}</td>
-      <td class="mono">${fmtM(aTMC)}</td>
-      <td class="${varClass(vTMC)}">${vTMC > 0 ? '+' : ''}${fmtM(vTMC)}</td>
-      <td class="mono">${fmtM(bNPE)}</td>
-      <td class="mono">${fmtM(aNPE)}</td>
-      <td class="${varClass(vNPE)}">${vNPE > 0 ? '+' : ''}${fmtM(vNPE)}</td>
+  keys.forEach(k=>{
+    const b=bm[k]||[],a=am[k]||[];
+    const bHC=sf(b,C.hc),aHC=sf(a,C.hc),bTMC=sf(b,C.tmc),aTMC=sf(a,C.tmc),bNPE=sf(b,C.npe),aNPE=sf(a,C.npe);
+    const vHC=aHC-bHC,vTMC=aTMC-bTMC,vNPE=aNPE-bNPE;
+    const meta=isBoat&&BOAT_META[k];
+    const lc=meta?`<span class="pill ${meta.cls}">${meta.short}</span>`:(k||'—');
+    h+=`<tr>
+      <td>${lc}</td>
+      <td class="mono">${f0(bHC)}</td><td class="mono">${f0(aHC)}</td><td class="${vc(vHC)}">${vs(vHC,f0)}</td>
+      <td class="mono">${fM(bTMC)}</td><td class="mono">${fM(aTMC)}</td><td class="${vc(vTMC)}">${vs(vTMC,fM)}</td>
+      <td class="mono">${fM(bNPE)}</td><td class="mono">${fM(aNPE)}</td><td class="${vc(vNPE)}">${vs(vNPE,fM)}</td>
     </tr>`;
   });
 
-  // Totals row
-  const bHCt = sumField(budRows, COL.headcount), aHCt = sumField(actRows, COL.headcount);
-  const bTMCt = sumField(budRows, COL.tmc), aTMCt = sumField(actRows, COL.tmc);
-  const bNPEt = sumField(budRows, COL.npe), aNPEt = sumField(actRows, COL.npe);
-  const vHCt = variance(aHCt,bHCt), vTMCt = variance(aTMCt,bTMCt), vNPEt = variance(aNPEt,bNPEt);
-  html += `<tr style="border-top: 2px solid var(--border2); font-weight:600">
+  const bHCt=sf(br,C.hc),aHCt=sf(ar,C.hc),bTMCt=sf(br,C.tmc),aTMCt=sf(ar,C.tmc),bNPEt=sf(br,C.npe),aNPEt=sf(ar,C.npe);
+  h+=`<tr style="border-top:2px solid var(--border2);font-weight:600">
     <td style="color:var(--accent)">TOTAL</td>
-    <td class="mono">${fmt0(bHCt)}</td><td class="mono">${fmt0(aHCt)}</td>
-    <td class="${varClass(vHCt)}">${vHCt>0?'+':''}${fmt0(vHCt)}</td>
-    <td class="mono">${fmtM(bTMCt)}</td><td class="mono">${fmtM(aTMCt)}</td>
-    <td class="${varClass(vTMCt)}">${vTMCt>0?'+':''}${fmtM(vTMCt)}</td>
-    <td class="mono">${fmtM(bNPEt)}</td><td class="mono">${fmtM(aNPEt)}</td>
-    <td class="${varClass(vNPEt)}">${vNPEt>0?'+':''}${fmtM(vNPEt)}</td>
+    <td class="mono">${f0(bHCt)}</td><td class="mono">${f0(aHCt)}</td><td class="${vc(aHCt-bHCt)}">${vs(aHCt-bHCt,f0)}</td>
+    <td class="mono">${fM(bTMCt)}</td><td class="mono">${fM(aTMCt)}</td><td class="${vc(aTMCt-bTMCt)}">${vs(aTMCt-bTMCt,fM)}</td>
+    <td class="mono">${fM(bNPEt)}</td><td class="mono">${fM(aNPEt)}</td><td class="${vc(aNPEt-bNPEt)}">${vs(aNPEt-bNPEt,fM)}</td>
   </tr>`;
-
-  html += `</tbody></table></div>`;
-  return html;
+  return h+'</tbody></table></div>';
 }
 
-// ─── BACK OFFICE DETAIL ───
-function renderBackOfficeDetail(budRows, actRows, prefix) {
-  // Group by employee name
-  const bMap = groupBy(budRows, r => getEmpName(r));
-  const aMap = groupBy(actRows, r => getEmpName(r));
-  const keys = Array.from(new Set([...Object.keys(bMap), ...Object.keys(aMap)])).filter(k => k && k !== '—').sort();
+// ════════════════════════════════════════════
+// BACK OFFICE DETAIL
+// ════════════════════════════════════════════
+function backOffice(br,ar,pfx){
+  const bm=gb(br,enm), am=gb(ar,enm);
+  const keys=[...new Set([...Object.keys(bm),...Object.keys(am)])].filter(k=>k&&k!=='—').sort();
+  if(!keys.length) return '<div class="empty">No back office employees found.</div>';
 
-  if (!keys.length) return '<div class="empty">No back office employees found.</div>';
+  const byBoat={};
+  keys.forEach(n=>{ const rows=am[n]||bm[n]||[]; const bt=bk(rows[0])||'OTHER'; if(!byBoat[bt]) byBoat[bt]=[]; byBoat[bt].push(n); });
 
-  // Group by boat for collapsibles
-  const byBoat = {};
-  keys.forEach(name => {
-    const rows = aMap[name] || bMap[name] || [];
-    const boat = String(rows[0]?.[COL.boat]||'').trim().toUpperCase() || 'OTHER';
-    if (!byBoat[boat]) byBoat[boat] = [];
-    byBoat[boat].push(name);
-  });
+  let h='';
+  Object.keys(byBoat).sort().forEach(bt=>{
+    const names=byBoat[bt], cid='bo_'+slug(bt)+'_'+pfx, m=BOAT_META[bt]||{short:bt,cls:'p-blue'};
+    h+=`<div class="ch open" onclick="togC('${cid}')">
+      <h4><span class="pill ${m.cls}">${m.short}</span>&nbsp; Back Office (${names.length} employees)</h4>
+      <span class="chev">▼</span></div>
+    <div class="cb open" id="${cid}">
+    <div class="tw"><table><thead><tr>
+      <th>Employee</th><th>Country</th><th>Job Title</th>
+      <th>Bud HC</th><th>Act HC</th><th>Var HC</th>
+      <th>Bud TMC</th><th>Act TMC</th><th>Var TMC</th>
+      <th>Delta Action</th>
+      <th style="color:var(--accent)">My Comment <span class="ai-tag">✦ AI</span></th>
+      <th style="color:var(--purple)">PP Comment</th>
+    </tr></thead><tbody>`;
 
-  let html = '';
-  Object.keys(byBoat).sort().forEach(boat => {
-    const names = byBoat[boat];
-    const collapseId = 'bo_' + slug(boat) + '_' + prefix;
-    html += `<div class="collapsible-header open" onclick="toggleCollapsible('${collapseId}')">
-      <h4><span class="pill ${BOAT_MAP[boat]?.color||'pill-blue'}">${BOAT_MAP[boat]?.short||boat}</span>&nbsp; Back Office (${names.length} employees)</h4>
-      <span class="chevron">▼</span>
-    </div>
-    <div class="collapsible-body open" id="${collapseId}">
-    <div class="table-wrap"><table>
-      <thead><tr>
-        <th>Employee</th><th>Country</th><th>Job Title</th><th>Grade</th>
-        <th>Bud HC</th><th>Act HC</th><th>Var HC</th>
-        <th>Bud TMC</th><th>Act TMC</th><th>Var TMC</th>
-        <th>Delta Action</th>
-        <th style="color:var(--accent)">My Comment <span class="ai-badge" title="AI-suggested based on HC variance">✦ AI</span></th>
-        <th style="color:var(--purple)">PP Comment</th>
-      </tr></thead><tbody>`;
-
-    names.forEach(name => {
-      const br = bMap[name] || [];
-      const ar = aMap[name] || [];
-      const allRows = [...br, ...ar];
-      const country = String(allRows[0]?.[COL.country]||'').trim();
-      const jobtitle = String(allRows[0]?.[COL.jobtitle]||'').trim();
-      const grade = String(allRows[0]?.[COL.grade]||'').trim();
-      const delta = String(ar[0]?.[COL.deltaaction] || br[0]?.[COL.deltaaction] || '').trim();
-
-      const bHC = sumField(br, COL.headcount), aHC = sumField(ar, COL.headcount);
-      const bTMC = sumField(br, COL.tmc), aTMC = sumField(ar, COL.tmc);
-      const vHC = variance(aHC, bHC);
-      const vTMC = variance(aTMC, bTMC);
-
-      const ck = commentKey(prefix, 'bo', name);
-      const saved = COMMENTS[ck] || {};
-      const aiSug = aiComment('BO', name, jobtitle, vHC, vTMC, delta, null);
-
-      html += `<tr>
-        <td><strong>${name}</strong></td>
-        <td><span class="pill pill-blue">${country}</span></td>
-        <td style="color:var(--text2);font-size:12px">${jobtitle}</td>
-        <td class="mono">${grade}</td>
-        <td class="mono">${fmt0(bHC)}</td>
-        <td class="mono">${fmt0(aHC)}</td>
-        <td class="${varClass(vHC)}">${vHC>0?'+':''}${fmt0(vHC)}</td>
-        <td class="mono">${fmtM(bTMC)}</td>
-        <td class="mono">${fmtM(aTMC)}</td>
-        <td class="${varClass(vTMC)}">${vTMC>0?'+':''}${fmtM(vTMC)}</td>
-        <td style="font-size:11px;color:var(--text2)">${delta}</td>
-        <td class="comment-cell">
-          <textarea class="comment-input my-comment" data-ck="${ck}" rows="2">${saved.myComment !== undefined ? saved.myComment : aiSug}</textarea>
-          <span class="save-indicator" id="si_my_${ck}">✓ saved</span>
-        </td>
-        <td class="comment-cell">
-          <textarea class="comment-input pp comment-input pp" data-ck="${ck}" rows="2">${saved.ppComment||''}</textarea>
-          <span class="save-indicator" id="si_pp_${ck}">✓ saved</span>
-        </td>
+    names.forEach(n=>{
+      const b=bm[n]||[],a=am[n]||[],all=[...b,...a];
+      const cty=String(all[0]?.[C.cty]||'').trim();
+      const jt=String(all[0]?.[C.jt]||'').trim();
+      const da=String(a[0]?.[C.da]||b[0]?.[C.da]||'').trim();
+      const bHC=sf(b,C.hc),aHC=sf(a,C.hc),bTMC=sf(b,C.tmc),aTMC=sf(a,C.tmc);
+      const vHC=aHC-bHC,vTMC=aTMC-bTMC;
+      const ck=ckk(pfx,'bo',n), sv=COMMENTS[ck]||{};
+      const ai=aiC(jt,vHC,vTMC,da);
+      h+=`<tr>
+        <td><strong>${n}</strong></td>
+        <td><span class="pill p-blue">${cty}</span></td>
+        <td style="color:var(--text2);font-size:12px">${jt}</td>
+        <td class="mono">${f0(bHC)}</td><td class="mono">${f0(aHC)}</td><td class="${vc(vHC)}">${vs(vHC,f0)}</td>
+        <td class="mono">${fM(bTMC)}</td><td class="mono">${fM(aTMC)}</td><td class="${vc(vTMC)}">${vs(vTMC,fM)}</td>
+        <td style="font-size:11px;color:var(--text2)">${da}</td>
+        <td class="cc"><textarea class="ci mc" data-ck="${ck}" rows="2">${sv.myComment!==undefined?sv.myComment:ai}</textarea><span class="si" id="sm_${ck}">✓ saved</span></td>
+        <td class="cc"><textarea class="ci pp" data-ck="${ck}" rows="2">${sv.ppComment||''}</textarea><span class="si" id="sp_${ck}">✓ saved</span></td>
       </tr>`;
     });
-
-    html += `</tbody></table></div></div>`;
+    h+='</tbody></table></div></div>';
   });
-
-  return html;
+  return h;
 }
 
-// ─── FRONT LINER DETAIL ───
-function renderFrontLinerDetail(budRows, actRows, prefix) {
-  // Group by CC + Job Title
-  const key = r => `${String(r[COL.cc]||'').trim()}|||${String(r[COL.jobtitle]||'').trim()}`;
-  const bMap = groupBy(budRows, key);
-  const aMap = groupBy(actRows, key);
-  const keys = Array.from(new Set([...Object.keys(bMap), ...Object.keys(aMap)])).filter(k => k && k !== '|||').sort();
+// ════════════════════════════════════════════
+// FRONT LINER DETAIL
+// ════════════════════════════════════════════
+function frontLiners(br,ar,pfx){
+  const kfn=r=>`${String(r[C.cc]||'').trim()}|||${String(r[C.jt]||'').trim()}`;
+  const bm=gb(br,kfn), am=gb(ar,kfn);
+  const keys=[...new Set([...Object.keys(bm),...Object.keys(am)])].filter(k=>k&&k!=='|||').sort();
+  if(!keys.length) return '<div class="empty">No front liner data found.</div>';
 
-  if (!keys.length) return '<div class="empty">No front liner data found.</div>';
+  const byCC={};
+  keys.forEach(k=>{ const [cc]=k.split('|||'); if(!byCC[cc]) byCC[cc]=[]; byCC[cc].push(k); });
 
-  // Group by CC
-  const byCC = {};
-  keys.forEach(k => {
-    const [cc] = k.split('|||');
-    if (!byCC[cc]) byCC[cc] = [];
-    byCC[cc].push(k);
-  });
+  let h='';
+  Object.keys(byCC).sort().forEach(cc=>{
+    const allRows=[...br,...ar].filter(r=>String(r[C.cc]||'').trim()===cc);
+    const ccn=String(allRows[0]?.[C.ccn]||'').trim();
+    const cid='fl_'+slug(cc)+'_'+pfx;
+    h+=`<div class="ch open" onclick="togC('${cid}')">
+      <h4>CC: <strong>${cc}</strong>${ccn?' — '+ccn:''} <span style="color:var(--text3);font-size:12px">(${byCC[cc].length} job titles)</span></h4>
+      <span class="chev">▼</span></div>
+    <div class="cb open" id="${cid}">
+    <div class="tw"><table><thead><tr>
+      <th>Job Title</th><th>Country</th>
+      <th>Bud HC</th><th>Act HC</th><th>Var HC</th>
+      <th>Bud TMC</th><th>Act TMC</th><th>Var TMC</th>
+      <th style="color:var(--accent)">My Comment <span class="ai-tag">✦ AI</span></th>
+      <th style="color:var(--purple)">PP Comment</th>
+    </tr></thead><tbody>`;
 
-  let html = '';
-  Object.keys(byCC).sort().forEach(cc => {
-    const allR = [...(bMap[cc + '|||'] || []), ...(aMap[cc + '|||'] || [])];
-    const ccName = String(allR[0]?.[COL.ccname] || budRows.find(r => String(r[COL.cc]||'').trim() === cc)?.[COL.ccname] || '').trim();
-    const collapseId = 'fl_' + slug(cc) + '_' + prefix;
-
-    html += `<div class="collapsible-header open" onclick="toggleCollapsible('${collapseId}')">
-      <h4>CC: <strong>${cc}</strong>&nbsp; ${ccName ? `— ${ccName}` : ''} <span style="color:var(--text3);font-size:12px">(${byCC[cc].length} job titles)</span></h4>
-      <span class="chevron">▼</span>
-    </div>
-    <div class="collapsible-body open" id="${collapseId}">
-    <div class="table-wrap"><table>
-      <thead><tr>
-        <th>Job Title</th><th>Country</th>
-        <th>Bud HC</th><th>Act HC</th><th>Var HC</th>
-        <th>Bud TMC</th><th>Act TMC</th><th>Var TMC</th>
-        <th style="color:var(--accent)">My Comment <span class="ai-badge" title="AI-suggested">✦ AI</span></th>
-        <th style="color:var(--purple)">PP Comment</th>
-      </tr></thead><tbody>`;
-
-    byCC[cc].forEach(k => {
-      const [, jt] = k.split('|||');
-      const br = bMap[k] || [];
-      const ar = aMap[k] || [];
-      const allRows = [...br,...ar];
-      const country = String(allRows[0]?.[COL.country]||'').trim();
-
-      const bHC = sumField(br, COL.headcount), aHC = sumField(ar, COL.headcount);
-      const bTMC = sumField(br, COL.tmc), aTMC = sumField(ar, COL.tmc);
-      const vHC = variance(aHC, bHC);
-      const vTMC = variance(aTMC, bTMC);
-
-      const ck = commentKey(prefix, 'fl', cc + '_' + jt);
-      const saved = COMMENTS[ck] || {};
-      const aiSug = aiComment('FL', null, jt, vHC, vTMC, null, bHC);
-
-      html += `<tr>
-        <td>${jt || '—'}</td>
-        <td><span class="pill pill-blue">${country}</span></td>
-        <td class="mono">${fmt0(bHC)}</td>
-        <td class="mono">${fmt0(aHC)}</td>
-        <td class="${varClass(vHC)}">${vHC>0?'+':''}${fmt0(vHC)}</td>
-        <td class="mono">${fmtM(bTMC)}</td>
-        <td class="mono">${fmtM(aTMC)}</td>
-        <td class="${varClass(vTMC)}">${vTMC>0?'+':''}${fmtM(vTMC)}</td>
-        <td class="comment-cell">
-          <textarea class="comment-input my-comment" data-ck="${ck}" rows="2">${saved.myComment !== undefined ? saved.myComment : aiSug}</textarea>
-          <span class="save-indicator" id="si_my_${ck}">✓ saved</span>
-        </td>
-        <td class="comment-cell">
-          <textarea class="comment-input pp" data-ck="${ck}" rows="2">${saved.ppComment||''}</textarea>
-          <span class="save-indicator" id="si_pp_${ck}">✓ saved</span>
-        </td>
+    byCC[cc].forEach(k=>{
+      const [,jt]=k.split('|||');
+      const b=bm[k]||[],a=am[k]||[];
+      const cty=String([...b,...a][0]?.[C.cty]||'').trim();
+      const bHC=sf(b,C.hc),aHC=sf(a,C.hc),bTMC=sf(b,C.tmc),aTMC=sf(a,C.tmc);
+      const vHC=aHC-bHC,vTMC=aTMC-bTMC;
+      const ck=ckk(pfx,'fl',cc+'_'+jt), sv=COMMENTS[ck]||{};
+      const ai=aiC(jt,vHC,vTMC,null);
+      h+=`<tr>
+        <td>${jt||'—'}</td>
+        <td><span class="pill p-blue">${cty}</span></td>
+        <td class="mono">${f0(bHC)}</td><td class="mono">${f0(aHC)}</td><td class="${vc(vHC)}">${vs(vHC,f0)}</td>
+        <td class="mono">${fM(bTMC)}</td><td class="mono">${fM(aTMC)}</td><td class="${vc(vTMC)}">${vs(vTMC,fM)}</td>
+        <td class="cc"><textarea class="ci mc" data-ck="${ck}" rows="2">${sv.myComment!==undefined?sv.myComment:ai}</textarea><span class="si" id="sm_${ck}">✓ saved</span></td>
+        <td class="cc"><textarea class="ci pp" data-ck="${ck}" rows="2">${sv.ppComment||''}</textarea><span class="si" id="sp_${ck}">✓ saved</span></td>
       </tr>`;
     });
-
-    html += `</tbody></table></div></div>`;
+    h+='</tbody></table></div></div>';
   });
-  return html;
+  return h;
 }
 
-// ═══════════════════════════════════════════════════
-// AI COMMENTS
-// ═══════════════════════════════════════════════════
-function aiComment(type, empName, jobTitle, vHC, vTMC, deltaAction, budHC) {
-  const parts = [];
-
-  if (vHC !== 0) {
-    const sign = vHC > 0 ? '+' : '';
-    if (type === 'BO') {
-      if (deltaAction && deltaAction.toLowerCase().includes('new hire')) parts.push(`${sign}${fmt0(vHC)} HC — New Hire`);
-      else if (deltaAction && deltaAction.toLowerCase().includes('terminat')) parts.push(`${sign}${fmt0(vHC)} HC — Termination`);
-      else parts.push(`${sign}${fmt0(vHC)} HC${jobTitle ? ' — ' + jobTitle : ''}`);
-    } else {
-      // Front liner
-      parts.push(`${sign}${fmt0(vHC)} HC${jobTitle ? ' — ' + jobTitle : ''}`);
-    }
+// ════════════════════════════════════════════
+// AI COMMENT
+// ════════════════════════════════════════════
+function aiC(jt,vHC,vTMC,da){
+  if(vHC!==0){
+    const s=vHC>0?'+':'';
+    if(da&&da.toLowerCase().includes('new hire'))  return `${s}${f0(vHC)} HC — New Hire${jt?' ('+jt+')':''}`;
+    if(da&&da.toLowerCase().includes('terminat'))  return `${s}${f0(vHC)} HC — Termination${jt?' ('+jt+')':''}`;
+    return `${s}${f0(vHC)} HC${jt?' — '+jt:''}`;
   }
-
-  if (vTMC !== 0 && vHC === 0) {
-    // Cost variance with no HC change
-    const sign = vTMC > 0 ? '+' : '';
-    parts.push(`Cost var ${sign}${fmtM(vTMC)} (HC unchanged)`);
-  }
-
-  if (parts.length === 0) return 'No variance';
-  return parts.join(' | ');
+  if(vTMC!==0) return `No HC var | Cost var ${vs(vTMC,fM)}`;
+  return 'No variance';
 }
 
-// ═══════════════════════════════════════════════════
-// COMMENT HANDLERS
-// ═══════════════════════════════════════════════════
-let saveTimers = {};
-function attachCommentHandlers() {
-  document.querySelectorAll('.my-comment').forEach(el => {
-    el.addEventListener('input', () => debounceSave(el, 'myComment', 'my'));
-  });
-  document.querySelectorAll('.comment-input.pp').forEach(el => {
-    el.addEventListener('input', () => debounceSave(el, 'ppComment', 'pp'));
-  });
+// ════════════════════════════════════════════
+// FIREBASE COMMENTS
+// ════════════════════════════════════════════
+async function saveComment(key,field,val){
+  if(!window._firebaseReady) return;
+  const {doc,setDoc}=window._firestoreOps;
+  if(!COMMENTS[key]) COMMENTS[key]={};
+  COMMENTS[key][field]=val;
+  try{ await setDoc(doc(window._db,'comments',key),COMMENTS[key],{merge:true}); }
+  catch(e){ console.warn(e); }
+}
+async function loadComments(){
+  if(!window._firebaseReady) return;
+  const {collection,getDocs}=window._firestoreOps;
+  try{
+    const sn=await getDocs(collection(window._db,'comments'));
+    sn.forEach(d=>{ COMMENTS[d.id]=d.data(); });
+  } catch(e){ console.warn(e); }
+}
+let ST={};
+function attachCH(){
+  document.querySelectorAll('.ci.mc').forEach(el=>el.addEventListener('input',()=>dbs(el,'myComment','sm')));
+  document.querySelectorAll('.ci.pp').forEach(el=>el.addEventListener('input',()=>dbs(el,'ppComment','sp')));
+}
+function dbs(el,field,pfx){
+  const ck=el.dataset.ck;
+  clearTimeout(ST[ck+field]);
+  ST[ck+field]=setTimeout(async()=>{
+    await saveComment(ck,field,el.value);
+    const si=document.getElementById(`${pfx}_${ck}`);
+    if(si){ si.classList.add('on'); setTimeout(()=>si.classList.remove('on'),2000); }
+  },800);
 }
 
-function debounceSave(el, field, pfx) {
-  const ck = el.dataset.ck;
-  clearTimeout(saveTimers[ck + field]);
-  saveTimers[ck + field] = setTimeout(async () => {
-    await saveComment(ck, field, el.value);
-    const si = document.getElementById(`si_${pfx}_${ck}`);
-    if (si) { si.classList.add('show'); setTimeout(() => si.classList.remove('show'), 2000); }
-  }, 800);
-}
-
-// ═══════════════════════════════════════════════════
-// HELPERS
-// ═══════════════════════════════════════════════════
-function isFrontLiner(r) {
-  const cat = String(r[COL.empcat]||'').toLowerCase();
-  return cat.includes('front') || cat.includes('liner') || cat.includes('frontliner');
-}
-
-function getEmpName(r) {
-  const n = String(r[COL.empname]||'').trim();
-  return n || String(r[COL.employee]||'').trim() || '—';
-}
-
-function slug(s) { return String(s).toLowerCase().replace(/[^a-z0-9]/g,'_'); }
-function shortBoat(b) { return BOAT_MAP[b]?.short || b; }
-function commentKey(...parts) { return parts.map(slug).join('__').substring(0, 180); }
-
-function fmt0(n) { return Number(n).toLocaleString('en-US', {maximumFractionDigits:0}); }
-function fmtM(n) {
-  const abs = Math.abs(n);
-  const sign = n < 0 ? '-' : '';
-  if (abs >= 1000000) return sign + '$' + (abs/1000000).toFixed(1) + 'M';
-  if (abs >= 1000) return sign + '$' + (abs/1000).toFixed(0) + 'K';
-  return sign + '$' + fmt0(abs);
-}
-
-function varClass(v) {
-  if (v === 0) return 'neu';
-  return v > 0 ? 'pos' : 'neg'; // positive variance = over budget = red
-}
-
-function kpiCard(label, val, delta, prefix, isCount) {
-  const fmt = isCount ? fmt0 : fmtM;
-  const dClass = delta === null ? '' : (delta > 0 ? 'pos' : delta < 0 ? 'neg' : 'neu');
-  const dText = delta === null ? '' : `${delta > 0 ? '▲ +' : delta < 0 ? '▼ ' : ''}${fmt(delta)} vs budget`;
-  return `<div class="kpi-card">
-    <div class="kpi-label">${label}</div>
-    <div class="kpi-value">${prefix}${fmt(val)}</div>
-    ${delta !== null ? `<div class="kpi-delta ${dClass}">${dText}</div>` : ''}
-  </div>`;
-}
-
-function toggleCollapsible(id) {
-  const body = document.getElementById(id);
-  const header = body?.previousElementSibling;
-  if (!body) return;
-  const open = body.classList.toggle('open');
-  header?.classList.toggle('open', open);
-}
-
-function showLoading(msg) {
-  document.getElementById('loading-screen').classList.remove('hidden');
-  document.getElementById('loading-msg').textContent = msg;
-}
-function updateLoading(msg) { document.getElementById('loading-msg').textContent = msg; }
-function hideLoading() { document.getElementById('loading-screen').classList.add('hidden'); }
+// ════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════
+function fv(v){ return RAW.filter(r=>{ if(String(r[C.ver]||'').trim()!==v) return false; if(!ACTIVE_M.length) return true; return ACTIVE_M.includes(pmon(r[C.mon])); }); }
+function gb(rows,fn){ const m={}; rows.forEach(r=>{ const k=fn(r); if(!m[k]) m[k]=[]; m[k].push(r); }); return m; }
+function sf(rows,idx){ return rows.reduce((s,r)=>s+(parseFloat(r[idx])||0),0); }
+function fl(r){ return String(r[C.cat]||'').toLowerCase().includes('front'); }
+function bo(r){ return !fl(r); }
+function rksa(r){ return String(r[C.cty]||'').trim().toUpperCase()==='KSA'; }
+function bk(r){ return r?String(r[C.boat]||'').trim().toUpperCase():''; }
+function enm(r){ return String(r[C.enm]||r[C.emp]||'').trim()||'—'; }
+function slug(s){ return String(s).toLowerCase().replace(/[^a-z0-9]/g,'_'); }
+function ckk(...p){ return p.map(slug).join('__').substring(0,180); }
+function f0(n){ return Number(n).toLocaleString('en-US',{maximumFractionDigits:0}); }
+function fM(n){ const a=Math.abs(n),s=n<0?'-':''; if(a>=1e6) return s+'$'+(a/1e6).toFixed(1)+'M'; if(a>=1000) return s+'$'+(a/1000).toFixed(0)+'K'; return s+'$'+f0(a); }
+function vc(v){ return v===0?'neu':v>0?'pos':'neg'; }
+function vs(v,fn){ return (v>0?'+':'')+fn(v); }
+function togC(id){ const b=document.getElementById(id),h=b?.previousElementSibling; if(!b) return; const o=b.classList.toggle('open'); h?.classList.toggle('open',o); }
+function showL(m){ document.getElementById('ls').classList.remove('hidden'); document.getElementById('lm').textContent=m; }
+function updateL(m){ document.getElementById('lm').textContent=m; }
+function hideL(){ document.getElementById('ls').classList.add('hidden'); }
 </script>
 </body>
 </html>
