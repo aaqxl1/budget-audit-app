@@ -8,283 +8,256 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { initializeApp }                      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc,
+         collection, getDocs }                from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, sendSignInLinkToEmail,
+         isSignInWithEmailLink, signInWithEmailLink,
+         onAuthStateChanged, signOut as fbSignOut }
+                                              from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
 const firebaseConfig = {
-  apiKey: "AIzaSyDVQpTDqAwjo1LxqZjx43qKtn4YaCJ2DaY",
-  authDomain: "budget-audit-app.firebaseapp.com",
-  projectId: "budget-audit-app",
-  storageBucket: "budget-audit-app.firebasestorage.app",
+  apiKey:            "AIzaSyDVQpTDqAwjo1LxqZjx43qKtn4YaCJ2DaY",
+  authDomain:        "budget-audit-app.firebaseapp.com",
+  projectId:         "budget-audit-app",
+  storageBucket:     "budget-audit-app.firebasestorage.app",
   messagingSenderId: "68647459712",
-  appId: "1:68647459712:web:06c2506e6453c0d72dbf65"
+  appId:             "1:68647459712:web:06c2506e6453c0d72dbf65"
 };
-const fbApp = initializeApp(firebaseConfig);
-const db = getFirestore(fbApp);
-window._db = db;
-window._firestoreOps = { doc, setDoc, getDoc, collection, getDocs };
+
+const fbApp  = initializeApp(firebaseConfig);
+const db     = getFirestore(fbApp);
+const auth   = getAuth(fbApp);
+
+window._db            = db;
+window._auth          = auth;
+window._firestoreOps  = { doc, setDoc, getDoc, collection, getDocs };
+window._authOps       = { sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, onAuthStateChanged, fbSignOut };
 window._firebaseReady = true;
 window.dispatchEvent(new Event('firebaseReady'));
 </script>
 
 <style>
 :root {
-  --bg: #0f0f0f;
-  --surface: #161616;
-  --surface2: #1e1e1e;
-  --surface3: #252525;
-  --border: #2a2a2a;
-  --border2: #333;
-  --text: #e8e4dc;
-  --text2: #9a9590;
-  --text3: #5a5550;
-  --accent: #c8a96e;
-  --accent2: #e8c88e;
-  --green: #4caf7d;
-  --red: #e05c5c;
-  --blue: #5c9ee0;
-  --purple: #9b7fd4;
-  --r: 8px;
-  --hh: 60px;
-  --vh: 48px;
-  --th: 46px;
+  --bg:#0f0f0f; --surface:#161616; --surface2:#1e1e1e; --surface3:#252525;
+  --border:#2a2a2a; --border2:#333; --text:#e8e4dc; --text2:#9a9590; --text3:#5a5550;
+  --accent:#c8a96e; --accent2:#e8c88e; --green:#4caf7d; --red:#e05c5c;
+  --blue:#5c9ee0; --purple:#9b7fd4; --r:8px; --hh:60px; --vh:48px;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; min-height: 100vh; }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100vh;}
 
-/* ── SCROLLBAR ── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--surface); }
-::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-* { scrollbar-width: thin; scrollbar-color: var(--border2) var(--surface); }
+/* Scrollbar */
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:var(--surface);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px;}
+::-webkit-scrollbar-thumb:hover{background:var(--accent);}
+*{scrollbar-width:thin;scrollbar-color:var(--border2) var(--surface);}
 
-/* ── HEADER ── */
-.header {
-  background: var(--surface); border-bottom: 1px solid var(--border);
-  padding: 0 32px; display: flex; align-items: center; justify-content: space-between;
-  height: var(--hh); position: sticky; top: 0; z-index: 300;
+/* ── FULL-PAGE SCREENS ── */
+.full-screen{
+  position:fixed;inset:0;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:990;padding:20px;
 }
-.logo { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; color: var(--accent); }
-.logo span { color: var(--text2); font-weight: 300; font-style: italic; }
-.hdr-right { display: flex; align-items: center; gap: 10px; }
+.auth-card{
+  background:var(--surface);border:1px solid var(--border2);border-radius:16px;
+  padding:48px 52px;max-width:460px;width:100%;text-align:center;
+}
+.auth-logo{font-family:'Fraunces',serif;font-size:26px;font-weight:600;color:var(--accent);margin-bottom:6px;}
+.auth-logo span{color:var(--text2);font-weight:300;font-style:italic;}
+.auth-sub{color:var(--text2);font-size:13px;margin-bottom:28px;line-height:1.6;}
+.auth-input{
+  width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text);
+  padding:11px 14px;border-radius:var(--r);font-family:'DM Sans',sans-serif;
+  font-size:14px;outline:none;margin-bottom:12px;transition:border-color .2s;text-align:left;
+}
+.auth-input:focus{border-color:var(--accent);}
+.auth-btn{
+  width:100%;background:var(--accent);color:#0f0f0f;border:none;
+  padding:12px 24px;border-radius:var(--r);font-family:'DM Sans',sans-serif;
+  font-size:14px;font-weight:500;cursor:pointer;transition:background .2s;
+}
+.auth-btn:hover{background:var(--accent2);}
+.auth-btn:disabled{background:var(--surface3);color:var(--text3);cursor:not-allowed;}
+.auth-err{color:var(--red);font-size:12px;margin-top:10px;min-height:18px;line-height:1.5;}
+.auth-note{color:var(--text3);font-size:11px;margin-top:18px;line-height:1.6;}
 
-/* ── ADMIN MENU ── */
-.admin-menu-wrap { position: relative; }
-.admin-menu-btn {
-  background: #2a2010; border: 1px solid var(--accent); color: var(--accent);
-  padding: 6px 14px; border-radius: var(--r); font-family: 'DM Sans', sans-serif;
-  font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 7px; transition: background .2s;
+/* check email screen */
+.check-icon{font-size:52px;margin-bottom:20px;}
+.auth-card h2{font-family:'Fraunces',serif;font-size:22px;color:var(--accent);margin-bottom:10px;}
+.auth-card .em-highlight{
+  background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);
+  padding:10px 16px;font-family:'DM Mono',monospace;font-size:13px;color:var(--text);
+  margin:14px 0 20px;word-break:break-all;
 }
-.admin-menu-btn:hover { background: #3a300a; }
-.admin-menu-btn .arr { font-size: 10px; transition: transform .2s; }
-.admin-menu-btn.open .arr { transform: rotate(180deg); }
-.admin-dd {
-  display: none; position: absolute; top: calc(100% + 8px); right: 0;
-  background: var(--surface); border: 1px solid var(--border2); border-radius: var(--r);
-  min-width: 240px; z-index: 400; box-shadow: 0 8px 32px rgba(0,0,0,.5); overflow: hidden;
-}
-.admin-dd.open { display: block; }
-.adm-sec { padding: 8px 0; border-bottom: 1px solid var(--border); }
-.adm-sec:last-child { border-bottom: none; }
-.adm-sec-title { padding: 5px 16px 3px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); }
-.adm-fi { padding: 7px 16px; }
-.adm-fi .fi-name { font-size: 12px; color: var(--text); font-weight: 500; word-break: break-all; }
-.adm-fi .fi-date { font-size: 11px; color: var(--text2); margin-top: 2px; }
-.adm-fi .fi-none { font-size: 12px; color: var(--text3); }
-.adm-btn {
-  width: 100%; padding: 9px 16px; background: none; border: none; color: var(--text);
-  font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer;
-  text-align: left; display: flex; align-items: center; gap: 9px; transition: background .15s;
-}
-.adm-btn:hover { background: var(--surface2); }
-.adm-btn.danger { color: var(--red); }
-.adm-btn.primary { color: var(--accent); font-weight: 500; }
-
-/* ── CONTROLS ── */
-.btn {
-  background: var(--surface2); border: 1px solid var(--border2); color: var(--text);
-  padding: 5px 12px; border-radius: var(--r); font-family: 'DM Sans', sans-serif;
-  font-size: 13px; cursor: pointer; outline: none; transition: border-color .2s;
-}
-.btn:hover { border-color: var(--accent); }
-.btn-primary { background: var(--accent); color: #0f0f0f; border: none; padding: 9px 20px; border-radius: var(--r); font-family: 'DM Sans', sans-serif; font-weight: 500; font-size: 13px; cursor: pointer; transition: background .2s; }
-.btn-primary:hover { background: var(--accent2); }
-.badge { background: var(--surface3); border: 1px solid var(--border2); color: var(--text2); padding: 3px 9px; border-radius: 20px; font-size: 11px; font-family: 'DM Mono', monospace; }
-.badge.live { border-color: var(--green); color: var(--green); }
-select {
-  background: var(--surface2); border: 1px solid var(--border2); color: var(--text);
-  padding: 5px 11px; border-radius: var(--r); font-family: 'DM Sans', sans-serif;
-  font-size: 13px; cursor: pointer; outline: none; transition: border-color .2s;
-}
-select:hover { border-color: var(--accent); }
-
-/* ── VERSION BAR — single line ── */
-.vbar {
-  background: var(--surface); border-bottom: 1px solid var(--border);
-  padding: 0 32px; display: flex; align-items: center; gap: 12px;
-  height: var(--vh); position: sticky; top: var(--hh); z-index: 290;
-  overflow-x: auto; flex-wrap: nowrap;
-}
-.vbar label { color: var(--text2); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; }
-.vbar-sep { width: 1px; height: 20px; background: var(--border2); flex-shrink: 0; }
-
-/* ── MONTH CHIPS — inline in vbar ── */
-.chips { display: flex; gap: 5px; flex-wrap: nowrap; }
-.chip {
-  background: var(--surface2); border: 1px solid var(--border2); color: var(--text2);
-  padding: 4px 10px; border-radius: 5px; font-size: 12px; cursor: pointer;
-  transition: all .2s; white-space: nowrap; font-family: 'DM Sans', sans-serif;
-}
-.chip:hover { border-color: var(--accent); color: var(--text); }
-.chip.on { background: #2a2010; border-color: var(--accent); color: var(--accent); font-weight: 500; }
-
-/* ── TABS ── */
-.tabs-wrap {
-  background: var(--surface); border-bottom: 1px solid var(--border);
-  padding: 0 32px; overflow-x: auto; white-space: nowrap;
-  position: sticky; top: calc(var(--hh) + var(--vh)); z-index: 280;
-}
-.tabs { display: inline-flex; }
-.tab {
-  padding: 13px 18px; cursor: pointer; color: var(--text2); font-size: 13px;
-  border-bottom: 2px solid transparent; transition: color .2s, border-color .2s; white-space: nowrap;
-}
-.tab:hover { color: var(--text); }
-.tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
-
-/* ── MAIN ── */
-.main { padding: 28px 32px; max-width: 1600px; }
-
-/* ── KPI ── */
-.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 28px; }
-.kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; }
-.kpi-lbl { color: var(--text2); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
-.kpi-val { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 600; }
-.kpi-d { font-family: 'DM Mono', monospace; font-size: 12px; margin-top: 4px; }
-.kpi-d.pos { color: var(--red); } .kpi-d.neg { color: var(--green); } .kpi-d.neu { color: var(--text2); }
-
-/* ── SECTION TITLE ── */
-.stitle {
-  font-family: 'Fraunces', serif; font-size: 17px; font-weight: 600; color: var(--accent);
-  margin: 28px 0 14px; display: flex; align-items: center; gap: 10px;
-}
-.stitle::after { content:''; flex:1; height:1px; background: var(--border); }
-
-/* ── TABLE ── */
-.tw {
-  border: 1px solid var(--border); border-radius: var(--r);
-  overflow-x: auto; overflow-y: auto; max-height: 500px; margin-bottom: 20px;
-}
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-thead th {
-  padding: 9px 13px; text-align: left; color: var(--text2); font-weight: 500;
-  font-size: 11px; text-transform: uppercase; letter-spacing: .7px; white-space: nowrap;
-  background: var(--surface2); position: sticky; top: 0; z-index: 5;
-  box-shadow: 0 1px 0 var(--border2);
-}
-tbody tr { border-bottom: 1px solid var(--border); transition: background .15s; }
-tbody tr:last-child { border-bottom: none; }
-tbody tr:hover { background: var(--surface2); }
-tbody td { padding: 9px 13px; vertical-align: middle; }
-.mono { font-family: 'DM Mono', monospace; font-size: 12px; }
-.pos  { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--red); }
-.neg  { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--green); }
-.neu  { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text2); }
-
-.pill { display:inline-block; padding:2px 7px; border-radius:4px; font-size:11px; font-family:'DM Mono',monospace; white-space:nowrap; }
-.p-blue   { background:#1a2d40; color:var(--blue); }
-.p-purple { background:#22183a; color:var(--purple); }
-.p-green  { background:#0d2a1a; color:var(--green); }
-.p-gold   { background:#2a2010; color:var(--accent); }
-.p-red    { background:#2a0f0f; color:var(--red); }
-
-/* ── COMMENTS ── */
-.cc { min-width: 170px; }
-.ci {
-  width:100%; background:var(--surface3); border:1px solid var(--border2);
-  border-radius:4px; color:var(--text); font-family:'DM Sans',sans-serif;
-  font-size:12px; padding:4px 7px; resize:none; min-height:34px; transition:border-color .2s;
-}
-.ci:focus { outline:none; border-color:var(--accent); }
-.ci.pp { border-color:#2a2040; }
-.ci.pp:focus { border-color:var(--purple); }
-.si { font-size:10px; color:var(--green); opacity:0; transition:opacity .3s; display:block; }
-.si.on { opacity:1; }
-.ai-tag { display:inline-flex; align-items:center; background:#1a1a2e; border:1px solid #2a2a4a; border-radius:4px; padding:2px 6px; font-size:10px; color:#7a7aff; margin-left:5px; }
-
-/* ── COLLAPSIBLE ── */
-.ch {
-  background:var(--surface2); border:1px solid var(--border); border-radius:var(--r);
-  padding:11px 15px; cursor:pointer; display:flex; align-items:center; justify-content:space-between;
-  margin-bottom:7px; transition:background .2s; user-select:none;
-}
-.ch:hover { background:var(--surface3); }
-.ch h4 { font-size:13px; color:var(--text); font-weight:500; }
-.chev { color:var(--text2); font-size:12px; transition:transform .2s; }
-.ch.open .chev { transform:rotate(180deg); }
-.cb { display:none; margin-bottom:14px; }
-.cb.open { display:block; }
-
-/* ── MODAL ── */
-.overlay { position:fixed; inset:0; background:rgba(0,0,0,.82); display:flex; align-items:center; justify-content:center; z-index:600; }
-.modal { background:var(--surface); border:1px solid var(--border2); border-radius:12px; padding:32px; width:340px; max-width:90vw; }
-.modal h3 { font-family:'Fraunces',serif; font-size:19px; color:var(--accent); margin-bottom:7px; }
-.modal p  { color:var(--text2); font-size:13px; margin-bottom:20px; line-height:1.5; }
-.modal input {
-  width:100%; background:var(--surface2); border:1px solid var(--border2); color:var(--text);
-  padding:9px 13px; border-radius:var(--r); font-family:'DM Sans',sans-serif;
-  font-size:14px; outline:none; margin-bottom:6px; transition:border-color .2s;
-}
-.modal input:focus { border-color:var(--accent); }
-.modal-err { color:var(--red); font-size:12px; min-height:16px; margin-bottom:10px; }
-.modal-btns { display:flex; gap:8px; justify-content:flex-end; }
+.resend-link{color:var(--accent);font-size:12px;cursor:pointer;background:none;border:none;font-family:'DM Sans',sans-serif;text-decoration:underline;}
+.resend-link:hover{color:var(--accent2);}
 
 /* ── LOADING ── */
-#ls { position:fixed; inset:0; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:999; }
-.spin { width:38px; height:38px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:sp .8s linear infinite; margin-bottom:14px; }
-@keyframes sp { to { transform:rotate(360deg); } }
-#ls p { color:var(--text2); font-size:13px; }
+#ls{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:995;}
+.spin{width:38px;height:38px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite;margin-bottom:14px;}
+@keyframes sp{to{transform:rotate(360deg);}}
+#ls p{color:var(--text2);font-size:13px;}
 
-/* ── WAITING ── */
-#ws { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:calc(100vh - var(--hh)); padding:40px; text-align:center; }
-.wi { font-size:52px; margin-bottom:20px; }
-#ws h2 { font-family:'Fraunces',serif; font-size:24px; color:var(--accent); margin-bottom:10px; }
-#ws p  { color:var(--text2); max-width:400px; line-height:1.6; margin-bottom:6px; }
-#ws .ws-hint { font-size:12px; color:var(--text3); margin-top:12px; }
+/* ── HEADER ── */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:var(--hh);position:sticky;top:0;z-index:300;}
+.logo{font-family:'Fraunces',serif;font-size:20px;font-weight:600;color:var(--accent);}
+.logo span{color:var(--text2);font-weight:300;font-style:italic;}
+.hdr-right{display:flex;align-items:center;gap:10px;}
+.user-chip{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border2);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--text2);}
+.user-chip .dot{width:7px;height:7px;border-radius:50%;background:var(--green);}
 
-.empty { text-align:center; padding:48px 20px; color:var(--text3); font-size:13px; }
-.hidden { display:none !important; }
-#fi { display:none; }
+/* Admin menu */
+.admin-menu-wrap{position:relative;}
+.admin-menu-btn{background:#2a2010;border:1px solid var(--accent);color:var(--accent);padding:6px 14px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:7px;transition:background .2s;}
+.admin-menu-btn:hover{background:#3a300a;}
+.admin-menu-btn .arr{font-size:10px;transition:transform .2s;}
+.admin-menu-btn.open .arr{transform:rotate(180deg);}
+.admin-dd{display:none;position:absolute;top:calc(100% + 8px);right:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);min-width:240px;z-index:400;box-shadow:0 8px 32px rgba(0,0,0,.5);overflow:hidden;}
+.admin-dd.open{display:block;}
+.adm-sec{padding:8px 0;border-bottom:1px solid var(--border);}
+.adm-sec:last-child{border-bottom:none;}
+.adm-sec-title{padding:5px 16px 3px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);}
+.adm-fi{padding:7px 16px;}
+.adm-fi .fi-name{font-size:12px;color:var(--text);font-weight:500;word-break:break-all;}
+.adm-fi .fi-date{font-size:11px;color:var(--text2);margin-top:2px;}
+.adm-fi .fi-none{font-size:12px;color:var(--text3);}
+.adm-btn{width:100%;padding:9px 16px;background:none;border:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:9px;transition:background .15s;}
+.adm-btn:hover{background:var(--surface2);}
+.adm-btn.danger{color:var(--red);}
+.adm-btn.primary{color:var(--accent);font-weight:500;}
 
-@media(max-width:768px){ .main{padding:16px;} .header,.vbar{padding:0 16px;} .tabs-wrap{padding:0 16px;} }
+/* Controls */
+.btn{background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:5px 12px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;outline:none;transition:border-color .2s;}
+.btn:hover{border-color:var(--accent);}
+.badge{background:var(--surface3);border:1px solid var(--border2);color:var(--text2);padding:3px 9px;border-radius:20px;font-size:11px;font-family:'DM Mono',monospace;}
+.badge.live{border-color:var(--green);color:var(--green);}
+select{background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:5px 11px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;outline:none;transition:border-color .2s;}
+select:hover{border-color:var(--accent);}
+
+/* ── VERSION BAR ── */
+.vbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;gap:12px;height:var(--vh);position:sticky;top:var(--hh);z-index:290;overflow-x:auto;flex-wrap:nowrap;}
+.vbar label{color:var(--text2);font-size:11px;text-transform:uppercase;letter-spacing:1px;white-space:nowrap;}
+.vbar-sep{width:1px;height:20px;background:var(--border2);flex-shrink:0;}
+.chips{display:flex;gap:5px;flex-wrap:nowrap;}
+.chip{background:var(--surface2);border:1px solid var(--border2);color:var(--text2);padding:4px 10px;border-radius:5px;font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap;font-family:'DM Sans',sans-serif;}
+.chip:hover{border-color:var(--accent);color:var(--text);}
+.chip.on{background:#2a2010;border-color:var(--accent);color:var(--accent);font-weight:500;}
+
+/* ── TABS ── */
+.tabs-wrap{background:var(--surface);border-bottom:1px solid var(--border);padding:0 32px;overflow-x:auto;white-space:nowrap;position:sticky;top:calc(var(--hh) + var(--vh));z-index:280;}
+.tabs{display:inline-flex;}
+.tab{padding:13px 18px;cursor:pointer;color:var(--text2);font-size:13px;border-bottom:2px solid transparent;transition:color .2s,border-color .2s;white-space:nowrap;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:500;}
+
+/* ── MAIN ── */
+.main{padding:28px 32px;max-width:1600px;}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:28px;}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;}
+.kpi-lbl{color:var(--text2);font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.kpi-val{font-family:'Fraunces',serif;font-size:26px;font-weight:600;}
+.kpi-d{font-family:'DM Mono',monospace;font-size:12px;margin-top:4px;}
+.kpi-d.pos{color:var(--red);}.kpi-d.neg{color:var(--green);}.kpi-d.neu{color:var(--text2);}
+
+/* Section title */
+.stitle{font-family:'Fraunces',serif;font-size:17px;font-weight:600;color:var(--accent);margin:28px 0 14px;display:flex;align-items:center;gap:10px;}
+.stitle::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* Table */
+.tw{border:1px solid var(--border);border-radius:var(--r);overflow-x:auto;overflow-y:auto;max-height:500px;margin-bottom:20px;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{padding:9px 13px;text-align:left;color:var(--text2);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.7px;white-space:nowrap;background:var(--surface2);position:sticky;top:0;z-index:5;box-shadow:0 1px 0 var(--border2);}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:var(--surface2);}
+tbody td{padding:9px 13px;vertical-align:middle;}
+.mono{font-family:'DM Mono',monospace;font-size:12px;}
+.pos{font-family:'DM Mono',monospace;font-size:12px;color:var(--red);}
+.neg{font-family:'DM Mono',monospace;font-size:12px;color:var(--green);}
+.neu{font-family:'DM Mono',monospace;font-size:12px;color:var(--text2);}
+.pill{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-family:'DM Mono',monospace;white-space:nowrap;}
+.p-blue{background:#1a2d40;color:var(--blue);}.p-purple{background:#22183a;color:var(--purple);}
+.p-green{background:#0d2a1a;color:var(--green);}.p-gold{background:#2a2010;color:var(--accent);}
+.p-red{background:#2a0f0f;color:var(--red);}
+
+/* Comments */
+.cc{min-width:170px;}
+.ci{width:100%;background:var(--surface3);border:1px solid var(--border2);border-radius:4px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;padding:4px 7px;resize:none;min-height:34px;transition:border-color .2s;}
+.ci:focus{outline:none;border-color:var(--accent);}
+.ci.pp{border-color:#2a2040;}.ci.pp:focus{border-color:var(--purple);}
+.si{font-size:10px;color:var(--green);opacity:0;transition:opacity .3s;display:block;}
+.si.on{opacity:1;}
+.ai-tag{display:inline-flex;align-items:center;background:#1a1a2e;border:1px solid #2a2a4a;border-radius:4px;padding:2px 6px;font-size:10px;color:#7a7aff;margin-left:5px;}
+
+/* Collapsible */
+.ch{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:11px 15px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;transition:background .2s;user-select:none;}
+.ch:hover{background:var(--surface3);}
+.ch h4{font-size:13px;color:var(--text);font-weight:500;}
+.chev{color:var(--text2);font-size:12px;transition:transform .2s;}
+.ch.open .chev{transform:rotate(180deg);}
+.cb{display:none;margin-bottom:14px;}
+.cb.open{display:block;}
+
+/* Waiting */
+#ws{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - var(--hh));padding:40px;text-align:center;}
+.wi{font-size:52px;margin-bottom:20px;}
+#ws h2{font-family:'Fraunces',serif;font-size:24px;color:var(--accent);margin-bottom:10px;}
+#ws p{color:var(--text2);max-width:400px;line-height:1.6;margin-bottom:6px;}
+#ws .ws-hint{font-size:12px;color:var(--text3);margin-top:12px;}
+
+.empty{text-align:center;padding:48px 20px;color:var(--text3);font-size:13px;}
+.hidden{display:none!important;}
+#fi{display:none;}
+@media(max-width:768px){.main{padding:16px;}.header,.vbar{padding:0 16px;}.tabs-wrap{padding:0 16px;}.auth-card{padding:32px 24px;}}
 </style>
 </head>
 <body>
 
 <!-- LOADING -->
-<div id="ls"><div class="spin"></div><p id="lm">Connecting to Firebase…</p></div>
+<div id="ls"><div class="spin"></div><p id="lm">Loading…</p></div>
 
-<!-- LOGIN MODAL -->
-<div class="overlay hidden" id="am">
-  <div class="modal">
-    <h3>Admin Login</h3>
-    <p>Enter the admin password to manage data and upload files.</p>
-    <input type="password" id="apw" placeholder="Password" onkeydown="if(event.key==='Enter')submitPw()"/>
-    <div class="modal-err" id="aperr"></div>
-    <div class="modal-btns">
-      <button class="btn" onclick="closeModal()">Cancel</button>
-      <button class="btn-primary" onclick="submitPw()">Login</button>
-    </div>
+<!-- STEP 1: ENTER EMAIL -->
+<div class="full-screen hidden" id="screen-email">
+  <div class="auth-card">
+    <div class="auth-logo">Budget Audit <span>FY26</span></div>
+    <p class="auth-sub">Enter your work email address to receive a secure sign-in link.</p>
+    <input class="auth-input" type="email" id="email-input" placeholder="your.name@chalhoub.com"
+           onkeydown="if(event.key==='Enter')sendLink()"/>
+    <button class="auth-btn" id="send-btn" onclick="sendLink()">Send Sign-In Link</button>
+    <div class="auth-err" id="email-err"></div>
+    <p class="auth-note">Access is restricted to authorised @chalhoub.com addresses only.</p>
+  </div>
+</div>
+
+<!-- STEP 2: CHECK EMAIL -->
+<div class="full-screen hidden" id="screen-check">
+  <div class="auth-card">
+    <div class="check-icon">📩</div>
+    <h2>Check your email</h2>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:4px">A sign-in link has been sent to</p>
+    <div class="em-highlight" id="sent-to-email"></div>
+    <p style="color:var(--text2);font-size:13px;line-height:1.6;margin-bottom:18px">
+      Click the link in the email to sign in.<br/>
+      The link expires in <strong style="color:var(--text)">60 minutes</strong>.<br/>
+      You can close this tab — the link will open the app directly.
+    </p>
+    <button class="resend-link" onclick="goBackToEmail()">← Use a different email</button>
+    <div class="auth-err" id="check-err"></div>
+    <p class="auth-note">Can't find the email? Check your spam/junk folder.<br/>Sent from noreply@budget-audit-app.firebaseapp.com</p>
   </div>
 </div>
 
 <!-- HEADER -->
-<header class="header">
+<header class="header hidden" id="main-header">
   <div class="logo">Budget Audit <span>FY26</span></div>
   <div class="hdr-right">
-    <span id="fbs" class="badge">⬤ Connecting…</span>
+    <span id="fbs" class="badge">⬤ Firebase</span>
     <span id="fib" class="badge hidden"></span>
-    <button class="btn hidden" id="admbtn" onclick="promptAdmin()">🔑 Admin Login</button>
+    <div class="user-chip" id="user-chip"><div class="dot"></div><span id="user-name-display">—</span></div>
     <div class="admin-menu-wrap hidden" id="admmenu">
       <button class="admin-menu-btn" id="admmenubtn" onclick="toggleAdminMenu()">🔑 Admin <span class="arr">▼</span></button>
       <div class="admin-dd" id="admdd">
@@ -297,19 +270,18 @@ tbody td { padding: 9px 13px; vertical-align: middle; }
           <button class="adm-btn primary" onclick="triggerUpload()">⬆ Upload New File</button>
         </div>
         <div class="adm-sec">
-          <button class="adm-btn danger" onclick="logoutAdmin()">↩ Logout</button>
+          <button class="adm-btn danger" onclick="doSignOut()">↩ Sign Out</button>
         </div>
       </div>
     </div>
+    <button class="btn hidden" id="signout-btn" onclick="doSignOut()">Sign Out</button>
   </div>
 </header>
 
 <!-- VERSION BAR -->
 <div class="vbar hidden" id="vbar">
-  <label>Budget</label>
-  <select id="bvs"></select>
-  <label>vs</label>
-  <select id="avs"></select>
+  <label>Budget</label><select id="bvs"></select>
+  <label>vs</label><select id="avs"></select>
   <div class="vbar-sep"></div>
   <label>Month</label>
   <div class="chips" id="mchips"></div>
@@ -317,17 +289,10 @@ tbody td { padding: 9px 13px; vertical-align: middle; }
 
 <!-- TABS -->
 <div class="tabs-wrap hidden" id="tw">
-  <div class="tabs">
-    <div class="tab active" data-id="summary" onclick="switchTab('summary')">📊 Overall — Full Fashion</div>
-    <div class="tab" data-id="ksa"   onclick="switchTab('ksa')">🇸🇦 KSA — All Boats</div>
-    <div class="tab" data-id="asp"   onclick="switchTab('asp')">💎 Aspirational Luxury</div>
-    <div class="tab" data-id="hiend" onclick="switchTab('hiend')">👑 High-End Luxury</div>
-    <div class="tab" data-id="prem"  onclick="switchTab('prem')">🐊 Premium & Delegation</div>
-    <div class="tab" data-id="mgt"   onclick="switchTab('mgt')">🏢 MGT</div>
-  </div>
+  <div class="tabs" id="tab-row"></div>
 </div>
 
-<!-- WAITING -->
+<!-- WAITING (no data) -->
 <div id="ws" class="hidden">
   <div class="wi">📊</div>
   <h2>No data loaded yet</h2>
@@ -342,70 +307,218 @@ tbody td { padding: 9px 13px; vertical-align: middle; }
 <input type="file" id="fi" accept=".xlsx,.xls" onchange="handleFile(event)"/>
 
 <script>
-// ══════════════════════════════════
-// CONFIG
-// ══════════════════════════════════
-const ADMIN_PW = 'Fashionaudit';
+// ══════════════════════════════════════════
+// ACCESS MAP
+// ══════════════════════════════════════════
+const ACCESS_MAP = {
+  'aaqil.shiraz@chalhoub.com':      'admin',
+  'sanaa.kazi@chalhoub.com':        'all',
+  'tanisha.mehta@chalhoub.com':     'all',
+  'marcelle.gadelrab@chalhoub.com': ['summary','asp'],
+  'blanca.diez@chalhoub.com':       ['summary','hiend'],
+  'jihad.chaouk@chalhoub.com':      ['summary','prem'],
+  'maisaa.pharaon@chalhoub.com':    ['summary','ksa'],
+};
+
+const ALL_TABS = [
+  { id:'summary', label:'📊 Overall — Full Fashion' },
+  { id:'ksa',     label:'🇸🇦 KSA — All Boats' },
+  { id:'asp',     label:'💎 Aspirational Luxury' },
+  { id:'hiend',   label:'👑 High-End Luxury' },
+  { id:'prem',    label:'🐊 Premium & Delegation' },
+  { id:'mgt',     label:'🏢 MGT' },
+];
 
 const BOAT_META = {
-  'ASPIRATIONAL LUXURY':  { short:'ASP',  cls:'p-purple' },
-  'HIGH-END LUXURY':      { short:'HEL',  cls:'p-blue'   },
-  'PREMIUM & DELEGATION': { short:'P&D',  cls:'p-green'  },
-  'MGT':                  { short:'MGT',  cls:'p-gold'   },
+  'ASPIRATIONAL LUXURY':  { short:'ASP', cls:'p-purple' },
+  'HIGH-END LUXURY':      { short:'HEL', cls:'p-blue' },
+  'PREMIUM & DELEGATION': { short:'P&D', cls:'p-green' },
+  'MGT':                  { short:'MGT', cls:'p-gold' },
 };
-const BOAT_TABS = {
-  asp:   'ASPIRATIONAL LUXURY',
-  hiend: 'HIGH-END LUXURY',
-  prem:  'PREMIUM & DELEGATION',
-  mgt:   'MGT',
-};
+const BOAT_TABS = { asp:'ASPIRATIONAL LUXURY', hiend:'HIGH-END LUXURY', prem:'PREMIUM & DELEGATION', mgt:'MGT' };
 
-// ══════════════════════════════════
+// ══════════════════════════════════════════
 // STATE
-// ══════════════════════════════════
+// ══════════════════════════════════════════
 let RAW=[], COMMENTS={}, VERSIONS=[], MONTHS=[];
 let BV='', AV='', ACTIVE_M=[];
 let ACTIVE_TAB='summary', IS_ADMIN=false, FILE_META=null;
+let CURRENT_EMAIL='', USER_ACCESS=null;
 const C={};
 
-// ══════════════════════════════════
-// FIREBASE
-// ══════════════════════════════════
-window.addEventListener('firebaseReady', async ()=>{
+const ACTION_CODE_SETTINGS = {
+  url: window.location.href,
+  handleCodeInApp: true,
+};
+
+// ══════════════════════════════════════════
+// FIREBASE READY
+// ══════════════════════════════════════════
+window.addEventListener('firebaseReady', ()=>{
   document.getElementById('fbs').textContent='⬤ Firebase';
   document.getElementById('fbs').classList.add('live');
-  await loadComments();
-  await tryLoadFile();
+  bootAuth();
 });
 
-// ══════════════════════════════════
-// ADMIN
-// ══════════════════════════════════
-function promptAdmin(){ document.getElementById('am').classList.remove('hidden'); setTimeout(()=>document.getElementById('apw').focus(),50); }
-function closeModal(){ document.getElementById('am').classList.add('hidden'); document.getElementById('aperr').textContent=''; document.getElementById('apw').value=''; }
-function submitPw(){
-  if(document.getElementById('apw').value===ADMIN_PW){
-    IS_ADMIN=true; closeModal();
-    document.getElementById('admbtn').classList.add('hidden');
+// ══════════════════════════════════════════
+// AUTH BOOT — check if returning from email link
+// ══════════════════════════════════════════
+async function bootAuth(){
+  const { isSignInWithEmailLink, signInWithEmailLink, onAuthStateChanged } = window._authOps;
+  const auth = window._auth;
+
+  // Case 1: returning from email link click
+  if(isSignInWithEmailLink(auth, window.location.href)){
+    showL('Signing you in…');
+    let email = window.localStorage.getItem('emailForSignIn');
+    if(!email){
+      // If opened on a different device, ask for email again
+      hideL(); showScreen('screen-email');
+      document.getElementById('email-err').textContent =
+        'Please re-enter your email to complete sign-in (link was opened on a different device).';
+      return;
+    }
+    try {
+      const result = await signInWithEmailLink(auth, email, window.location.href);
+      window.localStorage.removeItem('emailForSignIn');
+      // Clean the URL so the link can't be reused
+      window.history.replaceState({}, document.title, window.location.pathname);
+      await handleAuthedUser(result.user.email);
+    } catch(e){
+      hideL(); showScreen('screen-email');
+      document.getElementById('email-err').textContent = 'Sign-in link expired or already used. Please request a new one.';
+    }
+    return;
+  }
+
+  // Case 2: already signed in (session persisted)
+  onAuthStateChanged(auth, async user=>{
+    if(user){
+      await handleAuthedUser(user.email);
+    } else {
+      hideL();
+      showScreen('screen-email');
+    }
+  });
+}
+
+// ══════════════════════════════════════════
+// SEND EMAIL LINK
+// ══════════════════════════════════════════
+async function sendLink(){
+  const { sendSignInLinkToEmail } = window._authOps;
+  const emailInput = document.getElementById('email-input');
+  const email = emailInput.value.trim().toLowerCase();
+  const errEl = document.getElementById('email-err');
+  errEl.textContent='';
+
+  if(!email){ errEl.textContent='Please enter your email address.'; return; }
+  if(!email.endsWith('@chalhoub.com')){ errEl.textContent='Only @chalhoub.com email addresses are permitted.'; return; }
+  if(!ACCESS_MAP[email]){ errEl.textContent='This email address is not authorised to access this application.'; return; }
+
+  const btn = document.getElementById('send-btn');
+  btn.disabled=true; btn.textContent='Sending…';
+
+  try {
+    await sendSignInLinkToEmail(window._auth, email, ACTION_CODE_SETTINGS);
+    window.localStorage.setItem('emailForSignIn', email);
+    document.getElementById('sent-to-email').textContent = email;
+    showScreen('screen-check');
+  } catch(e){
+    errEl.textContent = 'Failed to send email: ' + (e.message||e);
+  } finally {
+    btn.disabled=false; btn.textContent='Send Sign-In Link';
+  }
+}
+
+function goBackToEmail(){
+  showScreen('screen-email');
+  document.getElementById('email-err').textContent='';
+}
+
+// ══════════════════════════════════════════
+// HANDLE AUTHENTICATED USER
+// ══════════════════════════════════════════
+async function handleAuthedUser(email){
+  const normEmail = (email||'').toLowerCase().trim();
+  const access = ACCESS_MAP[normEmail];
+  if(!access){
+    await doSignOut(true);
+    hideL(); showScreen('screen-email');
+    document.getElementById('email-err').textContent = `Access denied. ${normEmail} is not authorised.`;
+    return;
+  }
+  CURRENT_EMAIL = normEmail;
+  USER_ACCESS   = access;
+  IS_ADMIN      = (access === 'admin');
+
+  // Show first name in header
+  const firstName = normEmail.split('.')[0];
+  document.getElementById('user-name-display').textContent =
+    firstName.charAt(0).toUpperCase() + firstName.slice(1);
+
+  hideAllScreens();
+  document.getElementById('main-header').classList.remove('hidden');
+
+  if(IS_ADMIN){
     document.getElementById('admmenu').classList.remove('hidden');
-    document.getElementById('ws-hint').textContent='You are logged in as admin. Use the 🔑 Admin menu (top right) to upload a file.';
-    updateAdmFileInfo();
-    if(RAW.length) renderTab(ACTIVE_TAB);
-  } else { document.getElementById('aperr').textContent='Incorrect password. Try again.'; }
+  } else {
+    document.getElementById('signout-btn').classList.remove('hidden');
+  }
+
+  buildTabs();
+  showL('Loading data…');
+  await loadComments();
+  await tryLoadFile();
 }
-function logoutAdmin(){
-  IS_ADMIN=false; closeAdminMenu();
-  document.getElementById('admmenu').classList.add('hidden');
-  document.getElementById('admbtn').classList.remove('hidden');
-  document.getElementById('ws-hint').textContent='';
-  if(RAW.length) renderTab(ACTIVE_TAB);
+
+async function doSignOut(silent=false){
+  const { fbSignOut } = window._authOps;
+  window.localStorage.removeItem('emailForSignIn');
+  try{ await fbSignOut(window._auth); } catch(_){}
+  if(!silent) location.reload();
 }
+
+// ══════════════════════════════════════════
+// SCREEN HELPERS
+// ══════════════════════════════════════════
+function showScreen(id){
+  hideAllScreens();
+  document.getElementById(id).classList.remove('hidden');
+}
+function hideAllScreens(){
+  ['screen-email','screen-check'].forEach(id=>{
+    document.getElementById(id).classList.add('hidden');
+  });
+}
+function showL(m){ document.getElementById('ls').classList.remove('hidden'); document.getElementById('lm').textContent=m; }
+function updateL(m){ document.getElementById('lm').textContent=m; }
+function hideL(){ document.getElementById('ls').classList.add('hidden'); }
+
+// ══════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════
+function buildTabs(){
+  const allowed = getAllowedTabs();
+  ACTIVE_TAB = allowed[0]?.id || 'summary';
+  document.getElementById('tab-row').innerHTML = allowed.map((t,i)=>
+    `<div class="tab ${i===0?'active':''}" data-id="${t.id}" onclick="switchTab('${t.id}')">${t.label}</div>`
+  ).join('');
+}
+function getAllowedTabs(){
+  if(!USER_ACCESS||USER_ACCESS==='admin'||USER_ACCESS==='all') return ALL_TABS;
+  return ALL_TABS.filter(t=>USER_ACCESS.includes(t.id));
+}
+
+// ══════════════════════════════════════════
+// ADMIN MENU
+// ══════════════════════════════════════════
 function toggleAdminMenu(){
   const dd=document.getElementById('admdd'), btn=document.getElementById('admmenubtn');
   const open=dd.classList.toggle('open'); btn.classList.toggle('open',open);
 }
 function closeAdminMenu(){ document.getElementById('admdd').classList.remove('open'); document.getElementById('admmenubtn').classList.remove('open'); }
-document.addEventListener('click',e=>{ if(!document.getElementById('admmenu').contains(e.target)) closeAdminMenu(); });
+document.addEventListener('click',e=>{ const m=document.getElementById('admmenu'); if(m&&!m.contains(e.target)) closeAdminMenu(); });
 function triggerUpload(){ closeAdminMenu(); document.getElementById('fi').click(); }
 function updateAdmFileInfo(){
   const el=document.getElementById('adm-file-info');
@@ -414,9 +527,9 @@ function updateAdmFileInfo(){
   el.innerHTML=`<div class="fi-name">📄 ${FILE_META.name}</div><div class="fi-date">Uploaded: ${d}</div>`;
 }
 
-// ══════════════════════════════════
+// ══════════════════════════════════════════
 // FILE SAVE / LOAD
-// ══════════════════════════════════
+// ══════════════════════════════════════════
 async function saveFile(buf,name){
   showL('Saving to cloud…');
   const {doc,setDoc}=window._firestoreOps, db=window._db;
@@ -429,6 +542,7 @@ async function saveFile(buf,name){
   for(let i=0;i<chunks.length;i++){ updateL(`Saving… (${i+1}/${chunks.length})`); await setDoc(doc(db,'filestore',`c${i}`),{d:chunks[i]}); }
   FILE_META=meta; updateFileBadge(); updateAdmFileInfo();
 }
+
 async function tryLoadFile(){
   const {doc,getDoc}=window._firestoreOps, db=window._db;
   try{
@@ -446,12 +560,14 @@ async function tryLoadFile(){
     updateFileBadge(); hideL(); showApp();
   } catch(e){ console.warn(e); hideL(); showWaiting(); }
 }
+
 function updateFileBadge(){
   if(!FILE_META) return;
   const d=new Date(FILE_META.uploadedAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'});
   const b=document.getElementById('fib');
   b.textContent=`📄 ${FILE_META.name} · ${d}`; b.classList.remove('hidden');
 }
+
 function handleFile(e){ if(e.target.files[0]) processFile(e.target.files[0]); e.target.value=''; }
 function processFile(file){
   showL('Reading file…');
@@ -467,28 +583,28 @@ function processFile(file){
   r.readAsArrayBuffer(file);
 }
 
-// ══════════════════════════════════
+// ══════════════════════════════════════════
 // DATA PARSING
-// ══════════════════════════════════
+// ══════════════════════════════════════════
 function mapCols(hdr){
   const n=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
   hdr.forEach((h,i)=>{
     const v=n(h);
-    if(v.includes('version'))                                                      C.ver=i;
-    if(v.includes('calendarmonth')||(v.includes('calendar')&&v.includes('month'))) C.mon=i;
-    if((v==='employee'||v==='employeecode')&&C.emp===undefined)                    C.emp=i;
-    if(v==='country')                                                              C.cty=i;
-    if(v==='hrbp')                                                                 C.hrbp=i;
-    if(v==='boat')                                                                 C.boat=i;
-    if(v.includes('employeecategory'))                                             C.cat=i;
-    if(v==='cc')                                                                   C.cc=i;
-    if(v==='name'&&C.ccn===undefined)                                              C.ccn=i;
+    if(v.includes('version'))                                                        C.ver=i;
+    if(v.includes('calendarmonth')||(v.includes('calendar')&&v.includes('month')))  C.mon=i;
+    if((v==='employee'||v==='employeecode')&&C.emp===undefined)                      C.emp=i;
+    if(v==='country')                                                                C.cty=i;
+    if(v==='hrbp')                                                                   C.hrbp=i;
+    if(v==='boat')                                                                   C.boat=i;
+    if(v.includes('employeecategory'))                                               C.cat=i;
+    if(v==='cc')                                                                     C.cc=i;
+    if(v==='name'&&C.ccn===undefined)                                                C.ccn=i;
     if((v==='empname'||v==='employeename'||v.includes('empname'))&&C.enm===undefined) C.enm=i;
-    if(v==='jobtitle'&&C.jt===undefined)                                           C.jt=i;
-    if(v==='headcount')                                                            C.hc=i;
-    if(v.includes('deltaaction'))                                                  C.da=i;
-    if(v.includes('totalmanpowercost')||v.includes('totalmanpower'))               C.tmc=i;
-    if(v.includes('totalnonpayroll'))                                              C.npe=i;
+    if(v==='jobtitle'&&C.jt===undefined)                                             C.jt=i;
+    if(v==='headcount')                                                              C.hc=i;
+    if(v.includes('deltaaction'))                                                    C.da=i;
+    if(v.includes('totalmanpowercost')||v.includes('totalmanpower'))                 C.tmc=i;
+    if(v.includes('totalnonpayroll'))                                                C.npe=i;
   });
 }
 
@@ -502,54 +618,44 @@ function parseData(rows){
     const m=pmon(r[C.mon]); if(m) ms.add(m);
   });
   VERSIONS=[...vs].sort();
-  // Sort months chronologically
-  MONTHS=[...ms].sort((a,b)=>{
-    const da=parseMonthStr(a), db=parseMonthStr(b);
-    return da-db;
-  });
+  MONTHS=[...ms].sort((a,b)=>parseMonthLabel(a)-parseMonthLabel(b));
   ACTIVE_M=[];
   AV=VERSIONS.find(v=>v.toLowerCase().includes('actual'))||VERSIONS[VERSIONS.length-1];
   const buds=VERSIONS.filter(v=>!v.toLowerCase().includes('actual')).sort();
   BV=buds[buds.length-1]||VERSIONS[0];
 }
 
-// Parse a date value from Excel — handles Date objects, serial numbers, and string formats like "Sunday, 1 March 2026"
+function excelSerialToDate(serial){
+  const d=new Date(Date.UTC(1900,0,1));
+  d.setUTCDate(d.getUTCDate()+serial-2);
+  return d;
+}
 function pmon(v){
-  if(!v) return null;
-  // Already a JS Date
-  if(v instanceof Date && !isNaN(v)) return fmon(v);
-  const s=String(v).trim();
-  // Try native Date parse — handles "Sunday, 1 March 2026", ISO strings, etc.
-  const d=new Date(s);
-  if(!isNaN(d.getTime())) return fmon(d);
-  // Fallback: return as-is
+  if(!v&&v!==0) return null;
+  if(v instanceof Date&&!isNaN(v)) return fmon(v);
+  if(typeof v==='number'&&v>1000) return fmon(excelSerialToDate(v));
+  const s=String(v).trim(); if(!s) return null;
+  const d=new Date(s); if(!isNaN(d.getTime())) return fmon(d);
+  const n=parseFloat(s); if(!isNaN(n)&&n>1000) return fmon(excelSerialToDate(n));
   return s;
 }
 function fmon(d){ return d.toLocaleString('en-US',{month:'short',year:'numeric'}); }
+function parseMonthLabel(s){ const d=new Date('1 '+s); return isNaN(d)?0:d.getTime(); }
 
-// Convert "Mar 2026" back to a Date for sorting
-function parseMonthStr(s){
-  const d=new Date('1 '+s);
-  return isNaN(d)?new Date(s):d;
-}
-
-// ══════════════════════════════════
-// SHOW / HIDE
-// ══════════════════════════════════
+// ══════════════════════════════════════════
+// SHOW / HIDE APP
+// ══════════════════════════════════════════
 function showApp(){
   document.getElementById('ws').classList.add('hidden');
   document.getElementById('ac').classList.remove('hidden');
   document.getElementById('vbar').classList.remove('hidden');
   document.getElementById('tw').classList.remove('hidden');
-  if(!IS_ADMIN) document.getElementById('admbtn').classList.remove('hidden');
   setupVBar(); renderTab(ACTIVE_TAB);
 }
 function showWaiting(){
   document.getElementById('ws').classList.remove('hidden');
   document.getElementById('ac').classList.add('hidden');
-  document.getElementById('vbar').classList.add('hidden');
-  document.getElementById('tw').classList.add('hidden');
-  if(!IS_ADMIN) document.getElementById('admbtn').classList.remove('hidden');
+  if(IS_ADMIN) document.getElementById('ws-hint').textContent='You are logged in as admin. Use the 🔑 Admin menu (top right) to upload a file.';
 }
 function setupVBar(){
   const bv=document.getElementById('bvs'), av=document.getElementById('avs');
@@ -562,8 +668,7 @@ function setupVBar(){
   ).join('');
 }
 function togM(m){
-  const i=ACTIVE_M.indexOf(m);
-  if(i>-1) ACTIVE_M.splice(i,1); else ACTIVE_M.push(m);
+  const i=ACTIVE_M.indexOf(m); if(i>-1) ACTIVE_M.splice(i,1); else ACTIVE_M.push(m);
   document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',ACTIVE_M.includes(c.dataset.m)));
   renderTab(ACTIVE_TAB);
 }
@@ -573,9 +678,9 @@ function switchTab(id){
   renderTab(id);
 }
 
-// ══════════════════════════════════
+// ══════════════════════════════════════════
 // RENDER ROUTER
-// ══════════════════════════════════
+// ══════════════════════════════════════════
 function renderTab(id){
   const tc=document.getElementById('tc');
   if     (id==='summary') tc.innerHTML=renderSummary();
@@ -584,9 +689,6 @@ function renderTab(id){
   attachCH();
 }
 
-// ══════════════════════════════════
-// SUMMARY
-// ══════════════════════════════════
 function renderSummary(){
   const b=fv(BV), a=fv(AV);
   return `<div class="stitle">Overall — Full Fashion <small style="font-size:12px;font-weight:300;color:var(--text2)">${BV} vs ${AV}</small></div>`
@@ -596,10 +698,6 @@ function renderSummary(){
     +`<div class="stitle">By Boat — Front Liners</div>`+pivot(b.filter(fl),a.filter(fl),r=>bk(r),'Boat',true)
     +`<div class="stitle">By Boat — Back Office</div>`+pivot(b.filter(bo),a.filter(bo),r=>bk(r),'Boat',true);
 }
-
-// ══════════════════════════════════
-// KSA
-// ══════════════════════════════════
 function renderKSA(){
   const b=fv(BV).filter(rksa), a=fv(AV).filter(rksa);
   return `<div class="stitle">KSA — All Boats</div>`
@@ -608,10 +706,6 @@ function renderKSA(){
     +`<div class="stitle">Back Office — Employee Detail</div>`+backOffice(b.filter(bo),a.filter(bo),'ksa')
     +`<div class="stitle">Front Liners — Cost Center Detail</div>`+frontLiners(b.filter(fl),a.filter(fl),'ksa');
 }
-
-// ══════════════════════════════════
-// BOAT TAB
-// ══════════════════════════════════
 function renderBoat(boat){
   const b=fv(BV).filter(r=>bk(r)===boat), a=fv(AV).filter(r=>bk(r)===boat);
   const m=BOAT_META[boat]||{short:boat,cls:'p-blue'};
@@ -622,31 +716,22 @@ function renderBoat(boat){
     +`<div class="stitle">Front Liners — Cost Center Detail</div>`+frontLiners(b.filter(fl),a.filter(fl),slug(boat));
 }
 
-// ══════════════════════════════════
-// KPI ROW — no double $ sign
-// ══════════════════════════════════
 function kpiRow(b,a){
   const bHC=sf(b,C.hc),aHC=sf(a,C.hc),bTMC=sf(b,C.tmc),aTMC=sf(a,C.tmc),bNPE=sf(b,C.npe),aNPE=sf(a,C.npe);
   return `<div class="kpi-grid">
-    ${kc('Actual Headcount',    aHC,  aHC-bHC,  false, true)}
-    ${kc('Budget Headcount',    bHC,  null,      false, true)}
-    ${kc('Total Manpower Cost', aTMC, aTMC-bTMC, true,  false)}
-    ${kc('Total Non-Payroll Element Cost', aNPE, aNPE-bNPE, true, false)}
+    ${kc('Actual Headcount',aHC,aHC-bHC,false,true)}
+    ${kc('Budget Headcount',bHC,null,false,true)}
+    ${kc('Total Manpower Cost',aTMC,aTMC-bTMC,true,false)}
+    ${kc('Total Non-Payroll Element Cost',aNPE,aNPE-bNPE,true,false)}
   </div>`;
 }
-// isMoney=true → prefix with $, no extra prefix in value
 function kc(lbl,val,d,isMoney,isCount){
-  const fn=isCount?f0:fM;
-  // fM already prepends $, so for money cards pass val raw; for count no prefix
-  const display = isMoney ? fM(val) : f0(val);
+  const display=isMoney?fM(val):fHC(val);
   const dc=d===null?'':(d>0?'pos':d<0?'neg':'neu');
-  const ddisp=d===null?'':`${d>0?'▲ +':d<0?'▼ ':''}${isCount?f0(d):fM(d)} vs budget`;
+  const ddisp=d===null?'':`${d>0?'▲ +':d<0?'▼ ':''}${isCount?fHC(d):fM(d)} vs budget`;
   return `<div class="kpi"><div class="kpi-lbl">${lbl}</div><div class="kpi-val">${display}</div>${d!==null?`<div class="kpi-d ${dc}">${ddisp}</div>`:''}</div>`;
 }
 
-// ══════════════════════════════════
-// PIVOT TABLE
-// ══════════════════════════════════
 function pivot(br,ar,kfn,lbl,isBoat){
   const bm=gb(br,kfn), am=gb(ar,kfn);
   const keys=[...new Set([...Object.keys(bm),...Object.keys(am)])].filter(k=>k).sort();
@@ -655,31 +740,33 @@ function pivot(br,ar,kfn,lbl,isBoat){
     <th>${lbl}</th><th>Bud HC</th><th>Act HC</th><th>Var HC</th>
     <th>Bud TMC</th><th>Act TMC</th><th>Var TMC</th>
     <th>Bud NPE</th><th>Act NPE</th><th>Var NPE</th>
+    <th>Total Saving</th>
   </tr></thead><tbody>`;
   keys.forEach(k=>{
     const b=bm[k]||[], a=am[k]||[];
     const bHC=sf(b,C.hc),aHC=sf(a,C.hc),bTMC=sf(b,C.tmc),aTMC=sf(a,C.tmc),bNPE=sf(b,C.npe),aNPE=sf(a,C.npe);
-    const vHC=aHC-bHC, vTMC=aTMC-bTMC, vNPE=aNPE-bNPE;
+    const vHC=aHC-bHC,vTMC=aTMC-bTMC,vNPE=aNPE-bNPE;
+    const saving=(bTMC+bNPE)-(aTMC+aNPE);
     const meta=isBoat&&BOAT_META[k];
     const lc=meta?`<span class="pill ${meta.cls}">${meta.short}</span>`:(k||'—');
     h+=`<tr><td>${lc}</td>
-      <td class="mono">${f0(bHC)}</td><td class="mono">${f0(aHC)}</td><td class="${vc(vHC)}">${vs(vHC,f0)}</td>
+      <td class="mono">${fHC(bHC)}</td><td class="mono">${fHC(aHC)}</td><td class="${vc(vHC)}">${vHC>0?'+':''}${fHC(vHC)}</td>
       <td class="mono">${fM(bTMC)}</td><td class="mono">${fM(aTMC)}</td><td class="${vc(vTMC)}">${vs(vTMC,fM)}</td>
       <td class="mono">${fM(bNPE)}</td><td class="mono">${fM(aNPE)}</td><td class="${vc(vNPE)}">${vs(vNPE,fM)}</td>
+      <td class="${saving>0?'neg':saving<0?'pos':'neu'}">${saving>=0?'':'-'}${fM(Math.abs(saving))}</td>
     </tr>`;
   });
   const bHCt=sf(br,C.hc),aHCt=sf(ar,C.hc),bTMCt=sf(br,C.tmc),aTMCt=sf(ar,C.tmc),bNPEt=sf(br,C.npe),aNPEt=sf(ar,C.npe);
+  const savT=(bTMCt+bNPEt)-(aTMCt+aNPEt);
   h+=`<tr style="border-top:2px solid var(--border2);font-weight:600"><td style="color:var(--accent)">TOTAL</td>
-    <td class="mono">${f0(bHCt)}</td><td class="mono">${f0(aHCt)}</td><td class="${vc(aHCt-bHCt)}">${vs(aHCt-bHCt,f0)}</td>
+    <td class="mono">${fHC(bHCt)}</td><td class="mono">${fHC(aHCt)}</td><td class="${vc(aHCt-bHCt)}">${aHCt-bHCt>0?'+':''}${fHC(aHCt-bHCt)}</td>
     <td class="mono">${fM(bTMCt)}</td><td class="mono">${fM(aTMCt)}</td><td class="${vc(aTMCt-bTMCt)}">${vs(aTMCt-bTMCt,fM)}</td>
     <td class="mono">${fM(bNPEt)}</td><td class="mono">${fM(aNPEt)}</td><td class="${vc(aNPEt-bNPEt)}">${vs(aNPEt-bNPEt,fM)}</td>
+    <td class="${savT>0?'neg':savT<0?'pos':'neu'}">${savT>=0?'':'-'}${fM(Math.abs(savT))}</td>
   </tr>`;
   return h+'</tbody></table></div>';
 }
 
-// ══════════════════════════════════
-// BACK OFFICE — closed by default
-// ══════════════════════════════════
 function backOffice(br,ar,pfx){
   const bm=gb(br,enm), am=gb(ar,enm);
   const keys=[...new Set([...Object.keys(bm),...Object.keys(am)])].filter(k=>k&&k!=='—').sort();
@@ -689,7 +776,6 @@ function backOffice(br,ar,pfx){
   let h='';
   Object.keys(byBoat).sort().forEach(bt=>{
     const names=byBoat[bt], cid='bo_'+slug(bt)+'_'+pfx, m=BOAT_META[bt]||{short:bt,cls:'p-blue'};
-    // closed by default — no 'open' class
     h+=`<div class="ch" onclick="togC('${cid}')"><h4><span class="pill ${m.cls}">${m.short}</span>&nbsp; Back Office (${names.length} employees)</h4><span class="chev">▼</span></div>
     <div class="cb" id="${cid}"><div class="tw"><table><thead><tr>
       <th>Employee</th><th>Country</th><th>Job Title</th>
@@ -706,14 +792,13 @@ function backOffice(br,ar,pfx){
       const bHC=sf(b,C.hc),aHC=sf(a,C.hc),bTMC=sf(b,C.tmc),aTMC=sf(a,C.tmc);
       const vHC=aHC-bHC, vTMC=aTMC-bTMC;
       const ck=ckk(pfx,'bo',n), sv=COMMENTS[ck]||{};
-      const ai=aiC(jt,vHC,da);
       h+=`<tr>
         <td><strong>${n}</strong></td><td><span class="pill p-blue">${cty}</span></td>
         <td style="color:var(--text2);font-size:12px">${jt}</td>
-        <td class="mono">${f0(bHC)}</td><td class="mono">${f0(aHC)}</td><td class="${vc(vHC)}">${vs(vHC,f0)}</td>
+        <td class="mono">${fHC(bHC)}</td><td class="mono">${fHC(aHC)}</td><td class="${vc(vHC)}">${vHC>0?'+':''}${fHC(vHC)}</td>
         <td class="mono">${fM(bTMC)}</td><td class="mono">${fM(aTMC)}</td><td class="${vc(vTMC)}">${vs(vTMC,fM)}</td>
         <td style="font-size:11px;color:var(--text2)">${da}</td>
-        <td class="cc"><textarea class="ci mc" data-ck="${ck}" rows="2">${sv.myComment!==undefined?sv.myComment:ai}</textarea><span class="si" id="sm_${ck}">✓ saved</span></td>
+        <td class="cc"><textarea class="ci mc" data-ck="${ck}" rows="2">${sv.myComment!==undefined?sv.myComment:aiC(jt,vHC,da)}</textarea><span class="si" id="sm_${ck}">✓ saved</span></td>
         <td class="cc"><textarea class="ci pp" data-ck="${ck}" rows="2">${sv.ppComment||''}</textarea><span class="si" id="sp_${ck}">✓ saved</span></td>
       </tr>`;
     });
@@ -722,20 +807,13 @@ function backOffice(br,ar,pfx){
   return h;
 }
 
-// ══════════════════════════════════
-// FRONT LINERS — sorted by HC variance, CC name only, closed by default
-// ══════════════════════════════════
 function frontLiners(br,ar,pfx){
   const kfn=r=>`${String(r[C.cc]||'').trim()}|||${String(r[C.jt]||'').trim()}`;
   const bm=gb(br,kfn), am=gb(ar,kfn);
   const keys=[...new Set([...Object.keys(bm),...Object.keys(am)])].filter(k=>k&&k!=='|||').sort();
   if(!keys.length) return '<div class="empty">No front liner data found.</div>';
-
-  // Group by CC
   const byCC={};
   keys.forEach(k=>{ const [cc]=k.split('|||'); if(!byCC[cc]) byCC[cc]=[]; byCC[cc].push(k); });
-
-  // For each CC, compute total HC variance for sorting
   const ccList=Object.keys(byCC).map(cc=>{
     const allBud=br.filter(r=>String(r[C.cc]||'').trim()===cc);
     const allAct=ar.filter(r=>String(r[C.cc]||'').trim()===cc);
@@ -744,27 +822,14 @@ function frontLiners(br,ar,pfx){
     const ccName=String(rows[0]?.[C.ccn]||'').trim()||cc;
     return { cc, ccName, vHC };
   });
-
-  // Sort: positive HC var first (bad), then negative, then zero
-  ccList.sort((a,b)=>{
-    const ga = a.vHC>0?0 : a.vHC<0?1 : 2;
-    const gb2= b.vHC>0?0 : b.vHC<0?1 : 2;
-    if(ga!==gb2) return ga-gb2;
-    return b.vHC-a.vHC; // within same group, larger positive first
-  });
-
+  ccList.sort((a,b)=>{ const ga=a.vHC>0?0:a.vHC<0?1:2, gb2=b.vHC>0?0:b.vHC<0?1:2; if(ga!==gb2) return ga-gb2; return b.vHC-a.vHC; });
   let h='';
   ccList.forEach(({cc,ccName,vHC})=>{
     const cid='fl_'+slug(cc)+'_'+pfx;
-    // Add a visual indicator for positive HC var
-    const varBadge = vHC>0
-      ? `<span class="pill p-red" style="margin-left:8px">▲ +${f0(vHC)} HC</span>`
-      : vHC<0
-        ? `<span class="pill p-green" style="margin-left:8px">▼ ${f0(vHC)} HC</span>`
-        : '';
-    // closed by default — no 'open' class
+    const varBadge=vHC>0?`<span class="pill p-red" style="margin-left:8px">▲ +${fHC(vHC)} HC</span>`
+      :vHC<0?`<span class="pill p-green" style="margin-left:8px">▼ ${fHC(vHC)} HC</span>`:'';
     h+=`<div class="ch" onclick="togC('${cid}')">
-      <h4>${ccName}${varBadge} <span style="color:var(--text3);font-size:12px;margin-left:6px">(${byCC[cc].length} job titles)</span></h4>
+      <h4>${ccName}${varBadge}<span style="color:var(--text3);font-size:12px;margin-left:6px">(${byCC[cc].length} job titles)</span></h4>
       <span class="chev">▼</span></div>
     <div class="cb" id="${cid}"><div class="tw"><table><thead><tr>
       <th>Job Title</th><th>Country</th>
@@ -779,12 +844,11 @@ function frontLiners(br,ar,pfx){
       const bHC=sf(b,C.hc),aHC=sf(a,C.hc),bTMC=sf(b,C.tmc),aTMC=sf(a,C.tmc);
       const rVHC=aHC-bHC, vTMC=aTMC-bTMC;
       const ck=ckk(pfx,'fl',cc+'_'+jt), sv=COMMENTS[ck]||{};
-      const ai=aiC(jt,rVHC,null);
       h+=`<tr>
         <td>${jt||'—'}</td><td><span class="pill p-blue">${cty}</span></td>
-        <td class="mono">${f0(bHC)}</td><td class="mono">${f0(aHC)}</td><td class="${vc(rVHC)}">${vs(rVHC,f0)}</td>
+        <td class="mono">${fHC(bHC)}</td><td class="mono">${fHC(aHC)}</td><td class="${vc(rVHC)}">${rVHC>0?'+':''}${fHC(rVHC)}</td>
         <td class="mono">${fM(bTMC)}</td><td class="mono">${fM(aTMC)}</td><td class="${vc(vTMC)}">${vs(vTMC,fM)}</td>
-        <td class="cc"><textarea class="ci mc" data-ck="${ck}" rows="2">${sv.myComment!==undefined?sv.myComment:ai}</textarea><span class="si" id="sm_${ck}">✓ saved</span></td>
+        <td class="cc"><textarea class="ci mc" data-ck="${ck}" rows="2">${sv.myComment!==undefined?sv.myComment:aiC(jt,rVHC,null)}</textarea><span class="si" id="sm_${ck}">✓ saved</span></td>
         <td class="cc"><textarea class="ci pp" data-ck="${ck}" rows="2">${sv.ppComment||''}</textarea><span class="si" id="sp_${ck}">✓ saved</span></td>
       </tr>`;
     });
@@ -793,20 +857,14 @@ function frontLiners(br,ar,pfx){
   return h;
 }
 
-// ══════════════════════════════════
-// AI COMMENT — HC variance only, empty if no variance
-// ══════════════════════════════════
 function aiC(jt,vHC,da){
-  if(vHC===0 || vHC===undefined || vHC===null) return '';
+  if(!vHC||vHC===0) return '';
   const s=vHC>0?'+':'';
-  if(da&&da.toLowerCase().includes('new hire'))  return `${s}${f0(vHC)} HC — New Hire${jt?' ('+jt+')':''}`;
-  if(da&&da.toLowerCase().includes('terminat'))  return `${s}${f0(vHC)} HC — Termination${jt?' ('+jt+')':''}`;
-  return `${s}${f0(vHC)} HC${jt?' — '+jt:''}`;
+  if(da&&da.toLowerCase().includes('new hire'))  return `${s}${fHC(vHC)} HC — New Hire${jt?' ('+jt+')':''}`;
+  if(da&&da.toLowerCase().includes('terminat'))  return `${s}${fHC(vHC)} HC — Termination${jt?' ('+jt+')':''}`;
+  return `${s}${fHC(vHC)} HC${jt?' — '+jt:''}`;
 }
 
-// ══════════════════════════════════
-// FIREBASE COMMENTS
-// ══════════════════════════════════
 async function saveComment(key,field,val){
   if(!window._firebaseReady) return;
   const {doc,setDoc}=window._firestoreOps;
@@ -827,8 +885,7 @@ function attachCH(){
   document.querySelectorAll('.ci.pp').forEach(el=>el.addEventListener('input',()=>dbs(el,'ppComment','sp')));
 }
 function dbs(el,field,pfx){
-  const ck=el.dataset.ck;
-  clearTimeout(ST[ck+field]);
+  const ck=el.dataset.ck; clearTimeout(ST[ck+field]);
   ST[ck+field]=setTimeout(async()=>{
     await saveComment(ck,field,el.value);
     const si=document.getElementById(`${pfx}_${ck}`);
@@ -836,9 +893,6 @@ function dbs(el,field,pfx){
   },800);
 }
 
-// ══════════════════════════════════
-// UTILS
-// ══════════════════════════════════
 function fv(v){ return RAW.filter(r=>{ if(String(r[C.ver]||'').trim()!==v) return false; if(!ACTIVE_M.length) return true; return ACTIVE_M.includes(pmon(r[C.mon])); }); }
 function gb(rows,fn){ const m={}; rows.forEach(r=>{ const k=fn(r); if(!m[k]) m[k]=[]; m[k].push(r); }); return m; }
 function sf(rows,idx){ return rows.reduce((s,r)=>s+(parseFloat(r[idx])||0),0); }
@@ -849,23 +903,21 @@ function bk(r){ return r?String(r[C.boat]||'').trim().toUpperCase():''; }
 function enm(r){ return String(r[C.enm]||r[C.emp]||'').trim()||'—'; }
 function slug(s){ return String(s).toLowerCase().replace(/[^a-z0-9]/g,'_'); }
 function ckk(...p){ return p.map(slug).join('__').substring(0,180); }
+function fHC(n){
+  const num=Number(n);
+  if(Number.isInteger(num)) return num.toLocaleString('en-US');
+  return parseFloat(num.toFixed(1)).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:1});
+}
 function f0(n){ return Number(n).toLocaleString('en-US',{maximumFractionDigits:0}); }
 function fM(n){
-  const a=Math.abs(n), s=n<0?'-':'';
+  const a=Math.abs(n),s=n<0?'-':'';
   if(a>=1e6) return s+'$'+(a/1e6).toFixed(1)+'M';
   if(a>=1000) return s+'$'+(a/1000).toFixed(0)+'K';
   return s+'$'+f0(a);
 }
 function vc(v){ return v===0?'neu':v>0?'pos':'neg'; }
 function vs(v,fn){ return (v>0?'+':'')+fn(v); }
-function togC(id){
-  const b=document.getElementById(id), h=b?.previousElementSibling;
-  if(!b) return;
-  const o=b.classList.toggle('open'); h?.classList.toggle('open',o);
-}
-function showL(m){ document.getElementById('ls').classList.remove('hidden'); document.getElementById('lm').textContent=m; }
-function updateL(m){ document.getElementById('lm').textContent=m; }
-function hideL(){ document.getElementById('ls').classList.add('hidden'); }
+function togC(id){ const b=document.getElementById(id),h=b?.previousElementSibling; if(!b) return; const o=b.classList.toggle('open'); h?.classList.toggle('open',o); }
 </script>
 </body>
 </html>
